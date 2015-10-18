@@ -1,0 +1,2 @@
+Dependencies:
+shapely python library
