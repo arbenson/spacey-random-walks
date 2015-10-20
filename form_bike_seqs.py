@@ -1,4 +1,5 @@
 from collections import defaultdict
+import cPickle as pickle
 import csv
 from datetime import datetime
 import json
@@ -61,14 +62,19 @@ tripduration,starttime,stoptime,start station id,start station name,start statio
 
 if __name__ == '__main__':
     seqs = defaultdict(list)
+    station_keys = {}
+    def GetKey(name):
+        if name not in station_keys:
+            station_keys[name] = len(station_keys)
+        return station_keys[name]
 
     for data_file in sys.argv[1:]:
         sys.stderr.write('Reading from %s...\n' % data_file)
         with open(data_file, 'rb') as csvfile:
             trips = csv.DictReader(csvfile)
             for i, trip in enumerate(trips):
-                start_station = int(trip['start station id'])
-                end_station = int(trip['end station id'])
+                start_station = GetKey(trip['start station name'])
+                end_station = GetKey(trip['end station name'])
                 bikeid = trip['bikeid']
                 start_time = format_datetime(trip['starttime'])
                 seqs[bikeid].append((start_time, start_station, end_station))
@@ -78,3 +84,6 @@ if __name__ == '__main__':
 
     for _, seq in seqs.iteritems():
         sys.stdout.write(','.join([str(x) for x in ProcessSeq(seq)]) + '\n')
+
+    with open('station_keys.pkl', 'w') as f:
+        pickle.dump(station_keys, f)

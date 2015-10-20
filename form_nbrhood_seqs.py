@@ -13,11 +13,15 @@ Read the trip data and convert latlongs to a sequence of neighborhoods
 http://stackoverflow.com/questions/20776205/point-in-polygon-with-geojson-in-python
 '''
 
-def GetNeighborhoods():
+def GetNeighborhoods(boroughs=False):
     ''' Return list of (shape polygon, neighborhood) tuples '''
     # load GeoJSON file containing NYC neighborhoods
-    with open('data/neighborhoods.geojson', 'r') as f:
-        js = json.load(f)
+    if boroughs:
+        with open('data/boroughs.geojson', 'r') as f:
+            js = json.load(f)
+    else:
+        with open('data/neighborhoods.geojson', 'r') as f:
+            js = json.load(f)
 
     # Note: there is more than one polygon per neighborhood
     nbrhood_polys = []
@@ -25,7 +29,10 @@ def GetNeighborhoods():
 
     for feature in js['features']:
         poly = shape(feature['geometry'])
-        nbrhood = feature['properties']['neighborhood']
+        if boroughs:
+            nbrhood = feature['properties']['BoroName']
+        else:
+            nbrhood = feature['properties']['neighborhood']
         if nbrhood not in nbrhood_keys:
             nbrhood_keys[nbrhood] = len(nbrhood_keys)
         nbrhood_polys.append((poly, nbrhood_keys[nbrhood]))
@@ -59,9 +66,14 @@ def ProcessSeq(seq):
     return proc_seq
 
 if __name__ == '__main__':
-    nbrhood_polys, nbrhood_keys = GetNeighborhoods()
-    with open('neighborhood_keys.pkl', 'w') as f:
-        pickle.dump(nbrhood_keys, f)
+    boroughs=False
+    nbrhood_polys, nbrhood_keys = GetNeighborhoods(boroughs=boroughs)
+    if boroughs:
+        with open('boroughs_keys.pkl', 'w') as f:
+            pickle.dump(nbrhood_keys, f)
+    else:
+        with open('neighborhood_keys.pkl', 'w') as f:
+            pickle.dump(nbrhood_keys, f)
     seqs = defaultdict(list)
 
     for data_file in sys.argv[1:]:
@@ -69,20 +81,20 @@ if __name__ == '__main__':
         with open(data_file, 'rb') as csvfile:
             trips = csv.DictReader(csvfile)
             for i, trip in enumerate(trips):
-                lat = float(trip['pickup_latitude'])
-                long = float(trip['pickup_longitude'])
-                pickup_nbrhood = FindNeighborhood(lat, long, nbrhood_polys)
-                pickup_time = format_datetime(trip['pickup_datetime'])
+                try:
+                    lat = float(trip['pickup_latitude'])
+                    long = float(trip['pickup_longitude'])
+                    pickup_nbrhood = FindNeighborhood(lat, long, nbrhood_polys)
+                    pickup_time = format_datetime(trip['pickup_datetime'])
                 
-                lat = float(trip['dropoff_latitude'])
-                long = float(trip['dropoff_longitude'])
-                dropoff_nbrhood = FindNeighborhood(lat, long, nbrhood_polys)
+                    lat = float(trip['dropoff_latitude'])
+                    long = float(trip['dropoff_longitude'])
+                    dropoff_nbrhood = FindNeighborhood(lat, long, nbrhood_polys)
                 
-                medallion = trip['medallion']
-
-                #sys.stdout.write('%s\t%s\t%s\t%s\n' % (
-                #        medallion, pickup_nbrhood, dropoff_nbrhood, pickup_time))
-                seqs[medallion].append((pickup_time, pickup_nbrhood, dropoff_nbrhood))
+                    medallion = trip['medallion']
+                    seqs[medallion].append((pickup_time, pickup_nbrhood, dropoff_nbrhood))
+                except:
+                    continue
                 
                 if i % 100000 == 0:
                     sys.stderr.write(str(i) + '\n')
