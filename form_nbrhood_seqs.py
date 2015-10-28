@@ -59,6 +59,13 @@ def ProcessSeq(seq):
         proc_seq.append(curr_dropoff)
     return proc_seq
 
+def GetMedallions():
+    medallions = {}
+    with open('data/medallions-1k.txt') as f:
+        for line in f:
+            medallions[line.strip()] = 1
+    return medallions
+
 if __name__ == '__main__':
     geo_file = sys.argv[1]
     nbrhood_polys, nbrhood_keys = GetNeighborhoods(geo_file)
@@ -66,25 +73,28 @@ if __name__ == '__main__':
         pickle.dump(nbrhood_keys, f)
     seqs = defaultdict(list)
 
+    keep = GetMedallions()
+
     for data_file in sys.argv[2:]:
         sys.stderr.write('Reading from %s...\n' % data_file)
         with open(data_file, 'rb') as csvfile:
             trips = csv.DictReader(csvfile)
             for i, trip in enumerate(trips):
                 try:
-                    lat = float(trip['pickup_latitude'])
-                    long = float(trip['pickup_longitude'])
-                    pickup_nbrhood = FindNeighborhood(lat, long, nbrhood_polys)
-                    pickup_time = format_datetime(trip['pickup_datetime'])
-                
-                    lat = float(trip['dropoff_latitude'])
-                    long = float(trip['dropoff_longitude'])
-                    dropoff_nbrhood = FindNeighborhood(lat, long, nbrhood_polys)
-                    dropoff_time = format_datetime(trip['dropoff_datetime'])
-                
                     medallion = trip['medallion']
-                    seqs[medallion].append((pickup_time, dropoff_time,
-                                            pickup_nbrhood, dropoff_nbrhood))
+                    if medallion in keep:
+                        lat = float(trip['pickup_latitude'])
+                        long = float(trip['pickup_longitude'])
+                        pickup_nbrhood = FindNeighborhood(lat, long, nbrhood_polys)
+                        pickup_time = format_datetime(trip['pickup_datetime'])
+                
+                        lat = float(trip['dropoff_latitude'])
+                        long = float(trip['dropoff_longitude'])
+                        dropoff_nbrhood = FindNeighborhood(lat, long, nbrhood_polys)
+                        dropoff_time = format_datetime(trip['dropoff_datetime'])
+
+                        seqs[medallion].append((pickup_time, dropoff_time,
+                                                pickup_nbrhood, dropoff_nbrhood))
                 except:
                     continue
                 
