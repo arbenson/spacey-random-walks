@@ -1,23 +1,27 @@
+#include <cassert>
+#include <fstream>
 #include <iostream>
-#include <math>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include "math.h"
+
 
 class Tensor3 {
 public:
   Tensor3(int N) : N_(N) { data_.resize(N * N * N); }
 
-  double Get(int i, int j, int k) {
-    return data_[k + j * N + i * N * N];
+  double Get(int i, int j, int k) const {
+    return data_[k + j * N_ + i * N_ * N_];
   }
 
-  double Set(int i, int j, int k, double val) {
-    data_[k + j * N + i * N * N] = val;
+  void Set(int i, int j, int k, double val) {
+    data_[k + j * N_ + i * N_ * N_] = val;
   }
 
   // Get T(:, j, k)
-  std::vector<double> GetSlice1(int j, int k) {
+  std::vector<double> GetSlice1(int j, int k) const {
     std::vector<double> col(N_);
     for (int i = 0; i < N_; ++i) {
       col[k] = Get(i, j, k);
@@ -25,29 +29,11 @@ public:
     return col;
   }
 
-  // Get T(:, j, k)
-  std::vector<double> GetSliceExp1(int j, int k) {
-    std::vector<double> col(N_);
-    for (int i = 0; i < N_; ++i) {
-      col[k] = exp(Get(i, j, k));
-    }
-    return col;
-  }
-
   // Get T(i, j, :)
-  std::vector<double> GetSlice3(int i, int j) {
+  std::vector<double> GetSlice3(int i, int j) const {
     std::vector<double> col(N_);
     for (int k = 0; k < N_; ++k) {
       col[k] = Get(i, j, k);
-    }
-    return col;
-  }
-
-  // Get T(i, j, :)
-  std::vector<double> GetSliceExp3(int i, int j) {
-    std::vector<double> col(N_);
-    for (int k = 0; k < N_; ++k) {
-      col[k] = exp(Get(i, j, k));
     }
     return col;
   }
@@ -68,25 +54,53 @@ public:
     }
   }
 
-  const int dim() { return N_; }
+  void SetGlobalValue(double val) {
+    for (int i = 0; i < N_; ++i) {
+      for (int j = 0; j < N_; ++j) {
+	for (int k = 0; k < N_; ++k) {
+	  Set(i, j, k, val);
+	}
+      }
+    }
+  }
+
+  int dim() const { return N_; }
+  
 
 private:
   std::vector<double> data_;
   int N_;
 };
 
+template <typename T>
+std::vector<double> ScaledVec(const std::vector<T>& vec,
+			      double val) {
+  std::vector<double> svec(vec.size());
+  for (int i = 0; i < vec.size(); ++i) {
+    svec[i] = vec[i] * val;
+  }
+  return svec;
+}
+
 void Gradient(std::vector< std::vector<int> >& seqs,
 	      Tensor3& X, Tensor3& G) {
-  // ZerOut(G)
+  G.SetGlobalValue(0.0);
   for (auto& seq : seqs) {
     std::vector<int> history(X.dim(), 1);
     int total = X.dim();
     for (int l = 1; l < seq.size(); ++l) {
-      i = seq[l];
-      j = seq[l - 1];
+      int i = seq[l];
+      int j = seq[l - 1];
       auto occupancy = ScaledVec(history, 1.0 / total);
-      // vals = occ_v * np.exp(X[i, j, :])        
-      // G[i, j, :] += vals / np.sum(vals)
+      std::vector<double> vals(occupancy.size());
+      double sum = 0.0;
+      for (int k = 0; k < vals.size(); ++k) {
+	vals[k] = occupancy[k] * exp(X.Get(i, j, k));
+	sum += vals[k];
+      }
+      for (int k = 0; k < vals.size(); ++k) {
+	G.Set(i, j, k, G.Get(i, j, k) + vals[k] / sum);
+      }
       history[i] += 1;
       ++total;
     }
@@ -100,16 +114,19 @@ double LogLikelihood(std::vector< std::vector<int> >& seqs,
     std::vector<int> history(X.dim(), 1);
     int total = X.dim();
     for (int l = 1; l < seq.size(); ++l) {
-      i = seq[l];
-      j = seq[l - 1];
+      int i = seq[l];
+      int j = seq[l - 1];
       auto occupancy = ScaledVec(history, 1.0 / total);
-      // occ_v = occ_s / np.sum(occ_s)
-      // trans = np.exp(X[i, j, :])
-      // ll += np.log(np.sum(occ_v * trans))
+      double sum = 0.0;
+      for (int k = 0; k < occupancy.size(); ++k) {
+	sum += occupancy[k] * exp(X.Get(i, j, k));
+      }
+      ll += log(sum);
       history[i] += 1;
       ++total;
     }
   }
+  return ll;
 }
 
 void NormalizeStochastic(Tensor3& P) {
@@ -130,8 +147,8 @@ void NormalizeStochastic(Tensor3& P) {
   }
 }
 
-void ReadSequences(std::string filename) {
-  std::vector< std::vector<int> > seqs;
+void ReadSequences(std::string filename,
+		   std::vector< std::vector<int> >& seqs) {
   std::string line;
   std::ifstream infile(filename);
   while (std::getline(infile, line)) {
@@ -147,5 +164,25 @@ void ReadSequences(std::string filename) {
   }
 }
 
+int MaximumIndex(std::vector< std::vector<int> >& seqs) {
+  int max_ind = 0;
+  for (auto& seq : seqs) {
+    for (int val : seq) {
+      max_ind = std::max(max_ind, val);
+    }
+  }
+  return max_ind;
+}
 
+int main(int argc, char **argv) {
+  std::vector< std::vector<int> > seqs;
+  ReadSequences(argv[0], seqs);
+  int dim = MaximumIndex(seqs) + 1;
+  Tensor3 X(dim);
+  X.SetGlobalValue(-1);
+  NormalizeStochastic(X);
 
+  Tensor3 Grad(dim);
+  Grad.SetGlobalValue(0);
+  Gradient(seqs, X, Grad);
+}
