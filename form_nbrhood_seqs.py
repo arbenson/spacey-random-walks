@@ -80,14 +80,14 @@ if __name__ == '__main__':
         with open(data_file, 'rb') as csvfile:
             trips = csv.DictReader(csvfile)
             for i, trip in enumerate(trips):
-                try:
-                    medallion = trip['medallion']
-                    if medallion in keep:
+                medallion = trip['medallion']
+                if medallion in keep:
+                    try:
                         lat = float(trip['pickup_latitude'])
                         long = float(trip['pickup_longitude'])
                         pickup_nbrhood = FindNeighborhood(lat, long, nbrhood_polys)
                         pickup_time = format_datetime(trip['pickup_datetime'])
-                
+                    
                         lat = float(trip['dropoff_latitude'])
                         long = float(trip['dropoff_longitude'])
                         dropoff_nbrhood = FindNeighborhood(lat, long, nbrhood_polys)
@@ -95,8 +95,8 @@ if __name__ == '__main__':
 
                         seqs[medallion].append((pickup_time, dropoff_time,
                                                 pickup_nbrhood, dropoff_nbrhood))
-                except:
-                    continue
+                    except:
+                        continue
                 
                 if i % 100000 == 0:
                     sys.stderr.write(str(i) + '\n')
