@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <iostream>
@@ -9,8 +10,47 @@
 
 #include "tensor3.hpp"
 
-static double fraction_init = 0.2;
+static double fraction_init = 0.5;
 static double fraction_train = 0.4;
+
+// Minimum l2 projection onto the simplex.
+std::vector<double> EuclideanProjectSimplex(const std::vector<double>& vec) {
+  std::vector<double> mu = vec;
+  std::sort(mu.begin(), mu.end(), std::greater<int>());
+  // Get cumulative sum
+  double csum = 0.0;
+  int rho = 0;
+  for (int j = 0; j < mu.size(); ++j) {
+    csum += mu[j];
+    if (mu[j] - (csum - 1.0) / (j + 1) > 0) {
+      rho = j;
+    }
+  }
+
+  // Get the lagrange multiplier
+  csum = 0;
+  for (int j = 0; j <= rho; ++j) {
+    csum += mu[j];
+  }
+  double theta = (csum - 1.0) / (rho + 1.0);
+
+  std::vector<double> ret = vec;
+  for (int i = 0; i < ret.size(); ++i) {
+    ret[i] = std::max(vec[i] - theta, 0.0);
+  }
+  return ret;
+}
+
+// Project each column onto the simplex
+void Project(Tensor3& Y) {
+  int dim = Y.dim();
+  for (int j = 0; j < dim; ++j) {
+    for (int k = 0; k < dim; ++k) {
+      auto col = Y.GetSlice1(j, k);
+      Y.SetSlice1(j, k, EuclideanProjectSimplex(col));
+    }
+  }
+}
 
 template <typename T>
 std::vector<double> ScaledVec(const std::vector<T>& vec,
@@ -30,11 +70,13 @@ int EndingIndex(std::vector<int>& seq) {
   return floor((fraction_init + fraction_train) * seq.size());
 }
 
-std::vector<int> InitializeHistory(std::vector<int>& seq,
+std::vector<int> InitializeHistory(std::vector< std::vector<int> >& seqs,
 				   int dimension) {
   std::vector<int> history(dimension, 1);
-  for (int i = 0; i < StartingIndex(seq); ++i) {
-    history[seq[i]] += 1;
+  for (auto& seq : seqs) {
+    for (int i = 0; i < StartingIndex(seq); ++i) {
+      history[seq[i]] += 1;
+    }
   }
   return history;
 }
@@ -51,14 +93,14 @@ Tensor3 Gradient(std::vector< std::vector<int> >& seqs,
 		 Tensor3& P) {
   Tensor3 G(P.dim());
   G.SetGlobalValue(0.0);
+  std::vector<int> history = InitializeHistory(seqs, P.dim());
+  int total = Sum(history);
+  auto occupancy =
+    ScaledVec(history, 1.0 / static_cast<double>(total));
   for (auto& seq : seqs) {
-    std::vector<int> history = InitializeHistory(seq, P.dim());
-    int total = Sum(history);
     for (int l = StartingIndex(seq); l < EndingIndex(seq); ++l) {
       int i = seq[l];
       int j = seq[l - 1];
-      auto occupancy =
-	ScaledVec(history, 1.0 / static_cast<double>(total));
       double sum = 0.0;
       for (int k = 0; k < P.dim(); ++k) {
 	sum += occupancy[k] * P(i, j, k);
@@ -66,8 +108,6 @@ Tensor3 Gradient(std::vector< std::vector<int> >& seqs,
       for (int k = 0; k < P.dim(); ++k) {
 	G(i, j, k) = G.Get(i, j, k) + occupancy[k] / sum;
       }
-      history[i] += 1;
-      ++total;
     }
   }
   return G;
@@ -76,20 +116,18 @@ Tensor3 Gradient(std::vector< std::vector<int> >& seqs,
 double LogLikelihoodTrain(std::vector< std::vector<int> >& seqs, Tensor3& P) {
   double ll = 0.0;
   for (auto& seq : seqs) {
-    std::vector<int> history = InitializeHistory(seq, P.dim());
+    std::vector<int> history = InitializeHistory(seqs, P.dim());
     int total = Sum(history);
+    auto occupancy =
+      ScaledVec(history, 1.0 / static_cast<double>(total));
     for (int l = StartingIndex(seq); l < EndingIndex(seq); ++l) {
       int i = seq[l];
       int j = seq[l - 1];
-      auto occupancy =
-	ScaledVec(history, 1.0 / static_cast<double>(total));
       double sum = 0.0;
       for (int k = 0; k < occupancy.size(); ++k) {
 	sum += occupancy[k] * P(i, j, k);
       }
       ll += log(sum);
-      history[i] += 1;
-      ++total;
     }
   }
   return ll;
@@ -105,11 +143,11 @@ double SpaceyRMSE(std::vector< std::vector<int> >& seqs, Tensor3& P) {
       history[seq[l]] += 1;
     }
     int total = Sum(history);
+    auto occupancy =
+      ScaledVec(history, 1.0 / static_cast<double>(total));
     for (int l = EndingIndex(seq); l < seq.size(); ++l) {
       int i = seq[l];
       int j = seq[l - 1];
-      auto occupancy =
-	ScaledVec(history, 1.0 / static_cast<double>(total));
       double sum = 0.0;
       for (int k = 0; k < occupancy.size(); ++k) {
 	sum += occupancy[k] * P(i, j, k);
@@ -187,6 +225,22 @@ Tensor3 UpdateProbs(Tensor3& X, Tensor3& G, double step_size) {
   return Y;
 }
 
+Tensor3 UpdateAndProject(Tensor3& X, Tensor3& G, double step_size) {
+  int N = X.dim();
+  Tensor3 Y(N);
+  for (int i = 0; i < N; ++i) {
+    for (int j = 0; j < N; ++j) {
+      for (int k = 0; k < N; ++k) {
+	double xijk = X(i, j, k);
+	double gijk = G(i, j, k);
+	Y(i, j, k) = xijk + step_size * gijk;
+      }
+    }
+  }
+  Project(Y);
+  return Y;
+}
+
 Tensor3 InitializeEmpirical(std::vector< std::vector<int> >& seqs) {
   int dim = MaximumIndex(seqs) + 1;
   Tensor3 X(dim);
@@ -217,15 +271,13 @@ void GradientDescent(std::vector< std::vector<int> >& seqs) {
   double step_size = 1.0;
   while (iter < niter && step_size > 1e-16) {
     Tensor3 Grad = Gradient(seqs, X);
-    Tensor3 Y = UpdateProbs(X, Grad, step_size);
-    NormalizeStochastic(Y);
+    Tensor3 Y = UpdateAndProject(X, Grad, step_size);
     double test_ll = LogLikelihoodTrain(seqs, Y);
     double gen_rmse = SpaceyRMSE(seqs, Y);
     if (test_ll > curr_ll) {
       curr_ll = test_ll;
       X = Y;
       std::cerr << curr_ll << " " << step_size << " (" << gen_rmse << ")" << std::endl;
-      step_size = step_size * 0.9;
     } else {
       step_size = step_size * 0.1;
     }
@@ -242,6 +294,34 @@ double SecondOrderRMSE(std::vector< std::vector<int> >& seqs) {
       int j = seq[l - 1];
       int i = seq[l];
       double val = 1 - P(i, j, k);
+      err += val * val;
+      ++num;
+    }
+  }
+  return sqrt(err / num);
+}
+
+double SecondOrderUniformCollapseRMSE(std::vector< std::vector<int> >& seqs) {
+  Tensor3 P = InitializeEmpirical(seqs);
+  // Collapse
+  Matrix2 Pc(P.dim());
+  Pc.SetGlobalValue(0.0);
+  for (int i = 0; i < P.dim(); ++i) {
+    for (int j = 0; j < P.dim(); ++j) {
+      for (int k = 0; k < P.dim(); ++k) {
+	Pc(i, j) = Pc.Get(i, j) + P(i, j, k) / P.dim();
+      }
+    }
+  }
+
+  // Compute RMSE
+  double err = 0.0;
+  int num = 0;
+  for (auto& seq : seqs) {
+    for (int l = EndingIndex(seq); l < seq.size(); ++l) {
+      int j = seq[l - 1];
+      int i = seq[l];
+      double val = 1 - Pc(i, j);
       err += val * val;
       ++num;
     }
@@ -301,6 +381,8 @@ int main(int argc, char **argv) {
   std::cerr << "First order RMSE: "
 	    << FirstOrderRMSE(seqs) << std::endl
 	    << "Second order RMSE: "
-	    << SecondOrderRMSE(seqs) << std::endl;
+	    << SecondOrderRMSE(seqs) << std::endl
+	    << "Second order uniform collapse RMSE: "
+	    << SecondOrderUniformCollapseRMSE(seqs) << std::endl;
   GradientDescent(seqs);
 }
