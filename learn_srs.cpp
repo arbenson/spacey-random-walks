@@ -131,16 +131,6 @@ void ReadSequences(std::string filename,
   }
 }
 
-int MaximumIndex(std::vector< std::vector<int> >& seqs) {
-  int max_ind = 0;
-  for (auto& seq : seqs) {
-    for (int val : seq) {
-      max_ind = std::max(max_ind, val);
-    }
-  }
-  return max_ind;
-}
-
 Tensor3 UpdateProbs(Tensor3& X, Tensor3& G, double step_size) {
   int N = X.dim();
   Tensor3 Y(N);
