@@ -1,0 +1,116 @@
+(dp1
+I0
+S'OTHER'
+p2
+sVLower East Side
+p3
+I20
+sVFinancial District
+p4
+I9
+sVFlatiron District
+p5
+I10
+sVWest Village
+p6
+I37
+sVMorningside Heights
+p7
+I23
+sVCentral Park
+p8
+I2
+sVHell's Kitchen
+p9
+I15
+sVEast Harlem
+p10
+I6
+sVInwood
+p11
+I16
+sVWashington Heights
+p12
+I36
+sVGreenwich Village
+p13
+I13
+sVGramercy
+p14
+I12
+sVStuyvesant Town
+p15
+I30
+sVTribeca
+p16
+I32
+sVMarble Hill
+p17
+I21
+sVLiberty Island
+p18
+I18
+sVSoHo
+p19
+I29
+sVUpper West Side
+p20
+I35
+sVNoHo
+p21
+I25
+sVRandall's Island
+p22
+I27
+sVGovernors Island
+p23
+I11
+sVTheater District
+p24
+I31
+sVChinatown
+p25
+I4
+sVMidtown
+p26
+I22
+sVKips Bay
+p27
+I17
+sVLittle Italy
+p28
+I19
+sVRoosevelt Island
+p29
+I28
+sVHarlem
+p30
+I14
+sVChelsea
+p31
+I3
+sVTwo Bridges
+p32
+I33
+sVCivic Center
+p33
+I5
+sVMurray Hill
+p34
+I24
+sVBattery Park City
+p35
+I1
+sVEllis Island
+p36
+I8
+sVEast Village
+p37
+I7
+sVUpper East Side
+p38
+I34
+sVNolita
+p39
+I26
+s.

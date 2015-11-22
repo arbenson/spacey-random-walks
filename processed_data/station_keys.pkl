@@ -1,0 +1,1022 @@
+(dp1
+S'Ashland Pl & Hanson Pl'
+p2
+I108
+sS'W 11 St & 6 Ave'
+p3
+I177
+sS'Railroad Ave & Kay Ave'
+p4
+I323
+sS'Harrison St & Hudson St'
+p5
+I227
+sS'Little West St & 1 Pl'
+p6
+I295
+sS'Clinton Ave & Flushing Ave'
+p7
+I268
+sS'State St'
+p8
+I137
+sS'E 37 St & Lexington Ave'
+p9
+I82
+sS'W 49 St & 8 Ave'
+p10
+I24
+sS'Lexington Ave & E 26 St'
+p11
+I17
+sS'W 49 St & 5 Ave'
+p12
+I277
+sS'Water - Whitehall Plaza'
+p13
+I282
+sS'W 20 St & 7 Ave'
+p14
+I73
+sS'St Marks Pl & 1 Ave'
+p15
+I254
+sS'Grand Army Plaza & Central Park S'
+p16
+I162
+sS'E 15 St & 3 Ave'
+p17
+I174
+sS'S Portland Ave & Hanson Pl'
+p18
+I231
+sS'E 52 St & 2 Ave'
+p19
+I173
+sS'Warren St & Church St'
+p20
+I236
+sS'South End Ave & Liberty St'
+p21
+I54
+sS'Great Jones St'
+p22
+I93
+sS'Barclay St & Church St'
+p23
+I180
+sS'Lafayette St & E 8 St'
+p24
+I106
+sS'2 Ave & E 58 St'
+p25
+I21
+sS'E 43 St & Vanderbilt Ave'
+p26
+I246
+sS'W 37 St & 5 Ave'
+p27
+I189
+sS'Greenwich Ave & 8 Ave'
+p28
+I113
+sS'E 47 St & 1 Ave'
+p29
+I11
+sS'8 Ave & W 31 St'
+p30
+I84
+sS'Forsyth St & Canal St'
+p31
+I186
+sS'West Thames St'
+p32
+I86
+sS'Pearl St & Hanover Square'
+p33
+I286
+sS'11 Ave & W 27 St'
+p34
+I53
+sS'Watts St & Greenwich St'
+p35
+I269
+sS'Sands St & Navy St'
+p36
+I338
+sS'S 5 Pl & S 4 St'
+p37
+I88
+sS'W 21 St & 6 Ave'
+p38
+I14
+sS'S 4 St & Wythe Ave'
+p39
+I276
+sS'E 51 St & 1 Ave'
+p40
+I238
+sS'South St & Whitehall St'
+p41
+I3
+sS'Park Pl & Church St'
+p42
+I90
+sS'Washington Ave & Greene Ave'
+p43
+I301
+sS'Lispenard St & Broadway'
+p44
+I101
+sS'E 11 St & Broadway'
+p45
+I259
+sS'Christopher St & Greenwich St'
+p46
+I120
+sS'E 32 St & Park Ave'
+p47
+I213
+sS'Shevchenko Pl & E 6 St'
+p48
+I176
+sS'E 12 St & 3 Ave'
+p49
+I203
+sS'Willoughby Ave & Hall St'
+p50
+I67
+sS'E 19 St & 3 Ave'
+p51
+I144
+sS'W 43 St & 6 Ave'
+p52
+I111
+sS'W 29 St & 9 Ave'
+p53
+I114
+sS'W 22 St & 8 Ave'
+p54
+I169
+sS'Macon St & Nostrand Ave'
+p55
+I270
+sS'W 44 St & 5 Ave'
+p56
+I284
+sS'Allen St & Hester St'
+p57
+I256
+sS'1 Ave & E 18 St'
+p58
+I243
+sS'Greenwich St & Warren St'
+p59
+I193
+sS'Central Park S & 6 Ave'
+p60
+I56
+sS'Emerson Pl & Myrtle Ave'
+p61
+I77
+sS'9 Ave & W 22 St'
+p62
+I60
+sS'Gallatin Pl & Livingston St'
+p63
+I80
+sS'Allen St & E Houston St'
+p64
+I122
+sS'E 20 St & Park Ave'
+p65
+I198
+sS'W 22 St & 10 Ave'
+p66
+I160
+sS'5 Ave & E 29 St'
+p67
+I218
+sS'9 Ave & W 14 St'
+p68
+I40
+sS'Grand St & Greene St'
+p69
+I149
+sS'E 20 St & 2 Ave'
+p70
+I163
+sS'Stanton St & Mangin St'
+p71
+I273
+sS'W 17 St & 8 Ave'
+p72
+I43
+sS'W 46 St & 11 Ave'
+p73
+I260
+sS'Franklin Ave & Myrtle Ave'
+p74
+I302
+sS'Cliff St & Fulton St'
+p75
+I16
+sS'Washington Pl & Broadway'
+p76
+I52
+sS'10 Ave & W 28 St'
+p77
+I161
+sS'Avenue D & E 8 St'
+p78
+I199
+sS'E 10 St & 5 Ave'
+p79
+I170
+sS'DeKalb Ave & Hudson Ave'
+p80
+I225
+sS'Old Fulton St'
+p81
+I245
+sS'Broadway & W 49 St'
+p82
+I326
+sS'E 27 St & 1 Ave'
+p83
+I115
+sS'Washington Pl & 6 Ave'
+p84
+I133
+sS'Cadman Plaza E & Red Cross Pl'
+p85
+I332
+sS'Franklin St & W Broadway'
+p86
+I85
+sS'Shevchenko Pl & E 7 St'
+p87
+I337
+sS'Joralemon St & Adams St'
+p88
+I291
+sS'Murray St & West St'
+p89
+I287
+sS'Fulton St & William St'
+p90
+I300
+sS'E 33 St & 1 Ave'
+p91
+I223
+sS'Broadway & W 58 St'
+p92
+I313
+sS'Johnson St & Gold St'
+p93
+I240
+sS'E 10 St & Avenue A'
+p94
+I51
+sS'W 14 St & The High Line'
+p95
+I132
+sS'9 Ave & W 16 St'
+p96
+I194
+sS'Bayard St & Baxter St'
+p97
+I200
+sS'Clinton Ave & Myrtle Ave'
+p98
+I79
+sS'Laight St & Hudson St'
+p99
+I299
+sS'Avenue D & E 3 St'
+p100
+I69
+sS'South St & Gouverneur Ln'
+p101
+I309
+sS'Concord St & Bridge St'
+p102
+I78
+sS'Cadman Plaza West & Montague St'
+p103
+I335
+sS'E 47 St & Park Ave'
+p104
+I317
+sS'William St & Pine St'
+p105
+I87
+sS'Pearl St & Anchorage Pl'
+p106
+I154
+sS'Front St & Gold St'
+p107
+I81
+sS'Rivington St & Chrystie St'
+p108
+I91
+sS'W 54 St & 9 Ave'
+p109
+I265
+sS'W 34 St & 11 Ave'
+p110
+I47
+sS'8 Ave & W 52 St'
+p111
+I18
+sS'Pershing Square S'
+p112
+I89
+sS'Atlantic Ave & Fort Greene Pl'
+p113
+I8
+sS'E 5 St & Avenue C'
+p114
+I158
+sS'W 51 St & 6 Ave'
+p115
+I312
+sS'E 25 St & 2 Ave'
+p116
+I41
+sS'Stanton St & Chrystie St'
+p117
+I196
+sS'E 4 St & 2 Ave'
+p118
+I74
+sS'Greenwich Ave & Charles St'
+p119
+I50
+sS'Hancock St & Bedford Ave'
+p120
+I9
+sS'Broadway & W 60 St'
+p121
+I99
+sS'Pershing Square N'
+p122
+I6
+sS'Maiden Ln & Pearl St'
+p123
+I184
+sS'9 Ave & W 18 St'
+p124
+I234
+sS'Willoughby Ave & Walworth St'
+p125
+I127
+sS'Norfolk St & Broome St'
+p126
+I178
+sS'Peck Slip & Front Street'
+p127
+I339
+sS'Henry St & Poplar St'
+p128
+I151
+sS'E 11 St & 2 Ave'
+p129
+I112
+sS'E 16 St & 5 Ave'
+p130
+I121
+sS'Washington Park'
+p131
+I272
+sS'Cherry St'
+p132
+I262
+sS'Church St & Leonard St'
+p133
+I104
+sS'Henry St & Atlantic Ave'
+p134
+I230
+sS'Cumberland St & Lafayette Ave'
+p135
+I172
+sS'Lafayette St & Jersey St'
+p136
+I117
+sS'Forsyth St & Broome St'
+p137
+I130
+sS'Cleveland Pl & Spring St'
+p138
+I22
+sS'W 26 St & 8 Ave'
+p139
+I156
+sS'W 52 St & 9 Ave'
+p140
+I131
+sS'Adelphi St & Myrtle Ave'
+p141
+I34
+sS'W 52 St & 11 Ave'
+p142
+I126
+sS'Dean St & 4 Ave'
+p143
+I33
+sS'Greenwich St & N Moore St'
+p144
+I258
+sS'E 11 St & 1 Ave'
+p145
+I83
+sS'Myrtle Ave & St Edwards St'
+p146
+I293
+sS'8 Ave & W 33 St'
+p147
+I136
+sS'Canal St & Rutgers St'
+p148
+I103
+sS'W 53 St & 10 Ave'
+p149
+I191
+sS'W 38 St & 8 Ave'
+p150
+I305
+sS'Madison St & Clinton St'
+p151
+I296
+sS'Carmine St & 6 Ave'
+p152
+I171
+sS'W 33 St & 7 Ave'
+p153
+I233
+sS'Lafayette Ave & Classon Ave'
+p154
+I147
+sS'Reade St & Broadway'
+p155
+I129
+sS'Rivington St & Ridge St'
+p156
+I306
+sS'E 53 St & Lexington Ave'
+p157
+I263
+sS'Pitt St & Stanton St'
+p158
+I278
+sS'York St & Jay St'
+p159
+I244
+sS'W 20 St & 11 Ave'
+p160
+I139
+sS'Clermont Ave & Park Ave'
+p161
+I280
+sS'Suffolk St & Stanton St'
+p162
+I23
+sS'E 41 St & Madison Ave'
+p163
+I333
+sS'Atlantic Ave & Furman St'
+p164
+I164
+sS'St James Pl & Pearl St'
+p165
+I142
+sS'Lafayette Ave & Fort Greene Pl'
+p166
+I66
+sS'E 17 St & Broadway'
+p167
+I57
+sS'Duffield St & Willoughby St'
+p168
+I58
+sS'Washington Ave & Park Ave'
+p169
+I146
+sS'DeKalb Ave & Skillman St'
+p170
+I261
+sS'7 Ave & Farragut St'
+p171
+I303
+sS'Fulton St & Grand Ave'
+p172
+I98
+sS'9 Ave & W 45 St'
+p173
+I105
+sS'W Houston St & Hudson St'
+p174
+I125
+sS'Bialystoker Pl & Delancey St'
+p175
+I214
+sS'W 41 St & 8 Ave'
+p176
+I315
+sS'Park Ave & St Edwards St'
+p177
+I241
+sS'3 Ave & Schermerhorn St'
+p178
+I304
+sS'Fulton St & Waverly Ave'
+p179
+I255
+sS'W 18 St & 6 Ave'
+p180
+I65
+sS'W 16 St & The High Line'
+p181
+I211
+sS'6 Ave & Broome St'
+p182
+I217
+sS'E 30 St & Park Ave S'
+p183
+I248
+sS'E 25 St & 1 Ave'
+p184
+I166
+sS'1 Ave & E 30 St'
+p185
+I2
+sS'W 13 St & 5 Ave'
+p186
+I215
+sS'Flushing Ave & Carlton Ave'
+p187
+I148
+sS'University Pl & E 14 St'
+p188
+I36
+sS'FDR Drive & E 35 St'
+p189
+I281
+sS'E 59 St & Sutton Pl'
+p190
+I5
+sS'E 43 St & 2 Ave'
+p191
+I290
+sS'E 45 St & 3 Ave'
+p192
+I182
+sS'Broad St & Bridge St'
+p193
+I185
+sS'Elizabeth St & Hester St'
+p194
+I1
+sS'Clinton St & Tillary St'
+p195
+I153
+sS'Broadway & W 55 St'
+p196
+I327
+sS'W 45 St & 6 Ave'
+p197
+I319
+sS'Leonard St & Church St'
+p198
+I331
+sS'W 13 St & 7 Ave'
+p199
+I212
+sS'12 Ave & W 40 St'
+p200
+I116
+sS'Hicks St & Montague St'
+p201
+I288
+sS'Mercer St & Spring St'
+p202
+I307
+sS'E 7 St & Avenue A'
+p203
+I157
+sS'Washington Square E'
+p204
+I190
+sS'E 2 St & Avenue B'
+p205
+I96
+sS'Kent Ave & S 11 St'
+p206
+I209
+sS'Lexington Ave & E 24 St'
+p207
+I44
+sS'E 40 St & 5 Ave'
+p208
+I20
+sS'State St & Smith St'
+p209
+I232
+sS'Mott St & Prince St'
+p210
+I19
+sS'Willoughby St & Fleet St'
+p211
+I224
+sS'Front St & Washington St'
+p212
+I253
+sS'Monroe St & Classon Ave'
+p213
+I320
+sS'Avenue D & E 12 St'
+p214
+I202
+sS'Broadway & W 32 St'
+p215
+I187
+sS'Fulton St & Clermont Ave'
+p216
+I150
+sS'Howard St & Centre St'
+p217
+I167
+sS'E 58 St & 3 Ave'
+p218
+I294
+sS'E 42 St & Vanderbilt Ave'
+p219
+I330
+sS'6 Ave & W 33 St'
+p220
+I25
+sS'E 55 St & 2 Ave'
+p221
+I134
+sS'West St & Chambers St'
+p222
+I239
+sS'Lawrence St & Willoughby St'
+p223
+I107
+sS'6 Ave & Canal St'
+p224
+I226
+sS'E 53 St & Madison Ave'
+p225
+I308
+sS'E 3 St & 1 Ave'
+p226
+I71
+sS'Pike St & E Broadway'
+p227
+I197
+sS'Vesey Pl & River Terrace'
+p228
+I285
+sS'Broadway & W 37 St'
+p229
+I314
+sS'Duane St & Greenwich St'
+p230
+I195
+sS'W 42 St & 8 Ave'
+p231
+I92
+sS'Nassau St & Navy St'
+p232
+I271
+sS'Allen St & Rivington St'
+p233
+I37
+sS'MacDougal St & Washington Sq'
+p234
+I219
+sS'W Broadway & Spring St'
+p235
+I118
+sS'Broadway & W 51 St'
+p236
+I325
+sS'Perry St & Bleecker St'
+p237
+I249
+sS'E 47 St & 2 Ave'
+p238
+I188
+sS'Hudson St & Reade St'
+p239
+I72
+sS'W 13 St & 6 Ave'
+p240
+I216
+sS'Metropolitan Ave & Bedford Ave'
+p241
+I250
+sS'Sands St & Gold St'
+p242
+I292
+sS'Broadway & W 36 St'
+p243
+I135
+sS'W 20 St & 8 Ave'
+p244
+I110
+sS'Carlton Ave & Park Ave'
+p245
+I328
+sS'Pike St & Monroe St'
+p246
+I26
+sS'E 23 St & 1 Ave'
+p247
+I63
+sS'Columbia Heights & Cranberry St'
+p248
+I298
+sS'Market St & Cherry St'
+p249
+I279
+sS'1 Ave & E 44 St'
+p250
+I152
+sS'E 14 St & Avenue B'
+p251
+I124
+sS'S 3 St & Bedford Ave'
+p252
+I311
+sS'W 27 St & 7 Ave'
+p253
+I201
+sS'Madison St & Montgomery St'
+p254
+I140
+sS'Clermont Ave & Lafayette Ave'
+p255
+I205
+sS'E 16 St & Irving Pl'
+p256
+I222
+sS'Clinton St & Grand St'
+p257
+I95
+sS'Bedford Ave & S 9th St'
+p258
+I322
+sS'St Marks Pl & 2 Ave'
+p259
+I49
+sS'Old Slip & Front St'
+p260
+I318
+sS'Barrow St & Hudson St'
+p261
+I55
+sS'W 4 St & 7 Ave S'
+p262
+I13
+sS'Bank St & Washington St'
+p263
+I143
+sS'W 43 St & 10 Ave'
+p264
+I100
+sS'DeKalb Ave & S Portland Ave'
+p265
+I242
+sS'W 56 St & 10 Ave'
+p266
+I165
+sS'Henry St & Grand St'
+p267
+I29
+sS'E 31 St & 3 Ave'
+p268
+I168
+sS'Lafayette Ave & St James Pl'
+p269
+I97
+sS'Front St & Maiden Ln'
+p270
+I138
+sS'W 59 St & 10 Ave'
+p271
+I10
+sS'MacDougal St & Prince St'
+p272
+I62
+sS'E 6 St & Avenue D'
+p273
+I30
+sS'W 45 St & 8 Ave'
+p274
+I128
+sS'Broadway & W 41 St'
+p275
+I316
+sS'E 48 St & 3 Ave'
+p276
+I4
+sS'DeKalb Ave & Vanderbilt Ave'
+p277
+I68
+sS'Jay St & Tech Pl'
+p278
+I310
+sS'E 39 St & 2 Ave'
+p279
+I32
+sS'11 Ave & W 59 St'
+p280
+I334
+sS'E 33 St & 5 Ave'
+p281
+I7
+sS'W 26 St & 10 Ave'
+p282
+I207
+sS'Sullivan St & Washington Sq'
+p283
+I179
+sS'11 Ave & W 41 St'
+p284
+I220
+sS'W 24 St & 7 Ave'
+p285
+I159
+sS'Centre St & Chambers St'
+p286
+I321
+sS'Broadway & Berry St'
+p287
+I267
+sS'E 39 St & 3 Ave'
+p288
+I12
+sS'Grand St & Havemeyer St'
+p289
+I266
+sS'Broadway & W 29 St'
+p290
+I64
+sS'W 52 St & 5 Ave'
+p291
+I192
+sS'LaGuardia Pl & W 3 St'
+p292
+I119
+sS'Washington St & Gansevoort St'
+p293
+I210
+sS'Hanover Pl & Livingston St'
+p294
+I324
+sS'Clinton St & Joralemon St'
+p295
+I183
+sS'Liberty St & Broadway'
+p296
+I27
+sS'Broadway & Battery Pl'
+p297
+I237
+sS'Broadway & W 24 St'
+p298
+I48
+sS'W 31 St & 7 Ave'
+p299
+I204
+sS'E 56 St & Madison Ave'
+p300
+I208
+sS'1 Ave & E 15 St'
+p301
+I123
+sS'Lefferts Pl & Franklin Ave'
+p302
+I109
+sS'Montague St & Clinton St'
+p303
+I274
+sS'W 25 St & 6 Ave'
+p304
+I228
+sS'E 51 St & Lexington Ave'
+p305
+I297
+sS'John St & William St'
+p306
+I257
+sS'W 39 St & 9 Ave'
+p307
+I38
+sS'E 6 St & Avenue B'
+p308
+I70
+sS'Broadway & E 14 St'
+p309
+I35
+sS'Catherine St & Monroe St'
+p310
+I0
+sS'Columbia St & Rivington St'
+p311
+I39
+sS'E 13 St & Avenue A'
+p312
+I94
+sS'St James Pl & Oliver St'
+p313
+I283
+sS'E 20 St & FDR Drive'
+p314
+I252
+sS'W 56 St & 6 Ave'
+p315
+I61
+sS'Centre St & Worth St'
+p316
+I28
+sS'E 2 St & Avenue C'
+p317
+I42
+sS'Broadway & E 22 St'
+p318
+I75
+sS'E 9 St & Avenue C'
+p319
+I175
+sS'Cadman Plaza E & Tillary St'
+p320
+I289
+sS'E 56 St & 3 Ave'
+p321
+I181
+sS'Monroe St & Bedford Ave'
+p322
+I206
+sS'Bus Slip & State St'
+p323
+I336
+sS'Bond St & Schermerhorn St'
+p324
+I251
+sS'Clark St & Henry St'
+p325
+I264
+sS'Bank St & Hudson St'
+p326
+I155
+sS'Fulton St & Rockwell Pl'
+p327
+I275
+sS'W 47 St & 10 Ave'
+p328
+I102
+sS'W 37 St & 10 Ave'
+p329
+I45
+sS'Spruce St & Nassau St'
+p330
+I221
+sS'E 2 St & 2 Ave'
+p331
+I76
+sS'2 Ave & E 31 St'
+p332
+I31
+sS'Lexington Ave & Classon Ave'
+p333
+I145
+sS'Wythe Ave & Metropolitan Ave'
+p334
+I229
+sS'W 15 St & 7 Ave'
+p335
+I59
+sS'E 24 St & Park Ave S'
+p336
+I329
+sS'Division St & Bowery'
+p337
+I15
+sS'Broadway & W 53 St'
+p338
+I235
+sS'E 55 St & Lexington Ave'
+p339
+I247
+sS'Mercer St & Bleecker St'
+p340
+I141
+sS'Broadway & W 39 St'
+p341
+I46
+s.
