@@ -8,49 +8,11 @@
 
 #include "math.h"
 
+#include "common_srs.hpp"
 #include "tensor3.hpp"
 
-static double fraction_init = 0.5;
-static double fraction_train = 0.4;
-
-// Minimum l2 projection onto the simplex.
-std::vector<double> EuclideanProjectSimplex(const std::vector<double>& vec) {
-  std::vector<double> mu = vec;
-  std::sort(mu.begin(), mu.end(), std::greater<int>());
-  // Get cumulative sum
-  double csum = 0.0;
-  int rho = 0;
-  for (int j = 0; j < mu.size(); ++j) {
-    csum += mu[j];
-    if (mu[j] - (csum - 1.0) / (j + 1) > 0) {
-      rho = j;
-    }
-  }
-
-  // Get the lagrange multiplier
-  csum = 0;
-  for (int j = 0; j <= rho; ++j) {
-    csum += mu[j];
-  }
-  double theta = (csum - 1.0) / (rho + 1.0);
-
-  std::vector<double> ret = vec;
-  for (int i = 0; i < ret.size(); ++i) {
-    ret[i] = std::max(vec[i] - theta, 0.0);
-  }
-  return ret;
-}
-
-// Project each column onto the simplex
-void Project(Tensor3& Y) {
-  int dim = Y.dim();
-  for (int j = 0; j < dim; ++j) {
-    for (int k = 0; k < dim; ++k) {
-      auto col = Y.GetSlice1(j, k);
-      Y.SetSlice1(j, k, EuclideanProjectSimplex(col));
-    }
-  }
-}
+static double fraction_init = 0.4;
+static double fraction_train = 0.5;
 
 template <typename T>
 std::vector<double> ScaledVec(const std::vector<T>& vec,
@@ -79,14 +41,6 @@ std::vector<int> InitializeHistory(std::vector< std::vector<int> >& seqs,
     }
   }
   return history;
-}
-
-int Sum(std::vector<int>& vec) {
-  int sum = 0;
-  for (int v : vec) {
-    sum += v;
-  }
-  return sum;
 }
 
 Tensor3 Gradient(std::vector< std::vector<int> >& seqs,
@@ -160,27 +114,6 @@ double SpaceyRMSE(std::vector< std::vector<int> >& seqs, Tensor3& P) {
   return sqrt(err / num);
 }
 
-void NormalizeStochastic(Tensor3& P) {
-  int dim = P.dim();
-  for (int k = 0; k < dim; ++k) {
-    for (int j = 0; j < dim; ++j) {
-      std::vector<double> col = P.GetSlice1(j, k);
-      double sum = 0.0;
-      for (int i = 0; i < col.size(); ++i) {
-	sum += col[i];
-      }
-      if (sum == 0.0) {
-	col = std::vector<double>(col.size(), 1.0 / col.size());
-      } else {
-	for (int i = 0; i < col.size(); ++i) {
-	  col[i] /= sum;
-	}
-      }
-      P.SetSlice1(j, k, col);
-    }
-  }
-}
-
 void ReadSequences(std::string filename,
 		   std::vector< std::vector<int> >& seqs) {
   std::string line;
@@ -241,7 +174,7 @@ Tensor3 UpdateAndProject(Tensor3& X, Tensor3& G, double step_size) {
   return Y;
 }
 
-Tensor3 InitializeEmpirical(std::vector< std::vector<int> >& seqs) {
+Tensor3 EmpiricalSecondOrder(std::vector< std::vector<int> >& seqs) {
   int dim = MaximumIndex(seqs) + 1;
   Tensor3 X(dim);
   X.SetGlobalValue(0);
@@ -258,7 +191,7 @@ Tensor3 InitializeEmpirical(std::vector< std::vector<int> >& seqs) {
 }
 
 void GradientDescent(std::vector< std::vector<int> >& seqs) {
-  Tensor3 X = InitializeEmpirical(seqs);
+  Tensor3 X = EmpiricalSecondOrder(seqs);
   double curr_ll = LogLikelihoodTrain(seqs, X);
   double generalization_error = SpaceyRMSE(seqs, X);
   std::cerr << "Starting log likelihood: " << curr_ll << std::endl;
@@ -285,7 +218,7 @@ void GradientDescent(std::vector< std::vector<int> >& seqs) {
 }
 
 double SecondOrderRMSE(std::vector< std::vector<int> >& seqs) {
-  Tensor3 P = InitializeEmpirical(seqs);
+  Tensor3 P = EmpiricalSecondOrder(seqs);
   double err = 0.0;
   int num = 0;
   for (auto& seq : seqs) {
@@ -302,7 +235,7 @@ double SecondOrderRMSE(std::vector< std::vector<int> >& seqs) {
 }
 
 double SecondOrderUniformCollapseRMSE(std::vector< std::vector<int> >& seqs) {
-  Tensor3 P = InitializeEmpirical(seqs);
+  Tensor3 P = EmpiricalSecondOrder(seqs);
   // Collapse
   Matrix2 Pc(P.dim());
   Pc.SetGlobalValue(0.0);

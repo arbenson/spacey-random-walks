@@ -1,14 +1,17 @@
 #ifndef _TENSOR3_HPP_
 #define _TENSOR3_HPP_
 
-class Tensor3 {
+#include <cassert>
+
+template <typename T>
+class CubeTensor {
 public:
-  Tensor3() { data_ = NULL; }
-  Tensor3(int N) : N_(N) { data_ = new double[N * N * N]; }
-  ~Tensor3() { if (data_ != NULL) free(data_); }
+  CubeTensor() { data_ = NULL; }
+  CubeTensor(int N) : N_(N) { data_ = new T[N * N * N]; }
+  ~CubeTensor() { if (data_ != NULL) free(data_); }
 
   // Copy constructor
-  Tensor3(Tensor3& that) : Tensor3(that.dim()) {
+  CubeTensor(CubeTensor& that) : CubeTensor(that.dim()) {
     int N = that.dim();
     for (int i = 0; i < N; ++i) {
       for (int j = 0; j < N; ++j) {
@@ -20,33 +23,33 @@ public:
   }
 
   // Move constructor
-  Tensor3(Tensor3&& that) : Tensor3() {
+  CubeTensor(CubeTensor&& that) : CubeTensor() {
     swap(*this, that);
   }
 
   // copy assignment
-  Tensor3& operator=(Tensor3 that) {
+  CubeTensor& operator=(CubeTensor that) {
     swap(*this, that);
     return *this;
   }
 
-  friend void swap(Tensor3& first, Tensor3& second) {
+  friend void swap(CubeTensor& first, CubeTensor& second) {
     using std::swap;
     swap(first.N_, second.N_);
     swap(first.data_, second.data_);
   }
 
-  double Get(int i, int j, int k) const {
+  T Get(int i, int j, int k) const {
     return data_[k + j * N_ + i * N_ * N_];
   }
 
-  void Set(int i, int j, int k, double val) {
+  void Set(int i, int j, int k, T val) {
     data_[k + j * N_ + i * N_ * N_] = val;
   }
 
   // Get T(:, j, k)
-  std::vector<double> GetSlice1(int j, int k) const {
-    std::vector<double> col(N_);
+  std::vector<T> GetSlice1(int j, int k) const {
+    std::vector<T> col(N_);
     for (int i = 0; i < N_; ++i) {
       col[i] = Get(i, j, k);
     }
@@ -54,8 +57,8 @@ public:
   }
 
   // Get T(i, j, :)
-  std::vector<double> GetSlice3(int i, int j) const {
-    std::vector<double> col(N_);
+  std::vector<T> GetSlice3(int i, int j) const {
+    std::vector<T> col(N_);
     for (int k = 0; k < N_; ++k) {
       col[k] = Get(i, j, k);
     }
@@ -63,7 +66,7 @@ public:
   }
 
   // Set T(:, j, k)
-  void SetSlice1(int j, int k, const std::vector<double>& col) {
+  void SetSlice1(int j, int k, const std::vector<T>& col) {
     assert(col.size() >= N_);
     for (int i = 0; i < N_; ++i) {
       Set(i, j, k, col[i]);
@@ -71,14 +74,14 @@ public:
   }
 
   // Set T(i, j, :)
-  void SetSlice3(int i, int j, const std::vector<double>& col) {
+  void SetSlice3(int i, int j, const std::vector<T>& col) {
     assert(col.size() >= N_);
     for (int k = 0; k < N_; ++k) {
       Set(i, j, k, col[k]);
     }
   }
 
-  void SetGlobalValue(double val) {
+  void SetGlobalValue(T val) {
     for (int i = 0; i < N_; ++i) {
       for (int j = 0; j < N_; ++j) {
 	for (int k = 0; k < N_; ++k) {
@@ -90,26 +93,28 @@ public:
 
   int dim() const { return N_; }
 
-  const double& operator()(int i, int j, int k) const { 
+  const T& operator()(int i, int j, int k) const { 
     return data_[k + j * N_ + i * N_ * N_];
   }
-  double& operator()(int i, int j, int k) {
+  T& operator()(int i, int j, int k) {
     return data_[k + j * N_ + i * N_ * N_];
   }
 
 private:
-  double *data_;
+  T *data_;
   int N_;
 };
 
-class Matrix2 {
+
+template <typename T>
+class SquareMatrix {
 public:
-  Matrix2() { data_ = NULL; }
-  Matrix2(int N) : N_(N) { data_ = new double[N * N]; }
-  ~Matrix2() { if (data_ != NULL) free(data_); }
+  SquareMatrix() { data_ = NULL; }
+  SquareMatrix(int N) : N_(N) { data_ = new T[N * N]; }
+  ~SquareMatrix() { if (data_ != NULL) free(data_); }
 
   // Copy constructor
-  Matrix2(Matrix2& that) : Matrix2(that.dim()) {
+  SquareMatrix(SquareMatrix& that) : SquareMatrix(that.dim()) {
     int N = that.dim();
     for (int i = 0; i < N; ++i) {
       for (int j = 0; j < N; ++j) {
@@ -119,31 +124,31 @@ public:
   }
 
   // Move constructor
-  Matrix2(Matrix2&& that) : Matrix2() {
+  SquareMatrix(SquareMatrix&& that) : SquareMatrix() {
     swap(*this, that);
   }
 
   // copy assignment
-  Matrix2& operator=(Matrix2 that) {
+  SquareMatrix& operator=(SquareMatrix that) {
     swap(*this, that);
     return *this;
   }
 
-  friend void swap(Matrix2& first, Matrix2& second) {
+  friend void swap(SquareMatrix& first, SquareMatrix& second) {
     using std::swap;
     swap(first.N_, second.N_);
     swap(first.data_, second.data_);
   }
 
-  double Get(int i, int j) const {
+  T Get(int i, int j) const {
     return data_[j + i * N_];
   }
 
-  void Set(int i, int j, double val) {
+  void Set(int i, int j, T val) {
     data_[j + i * N_] = val;
   }
 
-  void SetGlobalValue(double val) {
+  void SetGlobalValue(T val) {
     for (int i = 0; i < N_; ++i) {
       for (int j = 0; j < N_; ++j) {
 	Set(i, j, val);
@@ -152,8 +157,8 @@ public:
   }
 
   // Get T(:, j)
-  std::vector<double> GetColumn(int j) const {
-    std::vector<double> col(N_);
+  std::vector<T> GetColumn(int j) const {
+    std::vector<T> col(N_);
     for (int i = 0; i < N_; ++i) {
       col[i] = Get(i, j);
     }
@@ -161,7 +166,7 @@ public:
   }
 
   // Set T(:, j)
-  void SetColumn(int j, const std::vector<double>& col) {
+  void SetColumn(int j, const std::vector<T>& col) {
     assert(col.size() >= N_);
     for (int i = 0; i < N_; ++i) {
       Set(i, j, col[i]);
@@ -170,16 +175,15 @@ public:
 
   int dim() const { return N_; }
 
-  const double& operator()(int i, int j) const { 
-    return data_[j + i * N_];
-  }
-  double& operator()(int i, int j) {
-    return data_[j + i * N_];
-  }
+  const T& operator()(int i, int j) const { return data_[j + i * N_]; }
+  T& operator()(int i, int j) { return data_[j + i * N_]; }
 
 private:
-  double *data_;
+  T *data_;
   int N_;
 };
+
+typedef SquareMatrix<double> Matrix2;
+typedef CubeTensor<double> Tensor3;
 
 #endif  // _TENSOR3_HPP_
