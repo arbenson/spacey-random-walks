@@ -1,8 +1,16 @@
 #include <iostream>
 #include <random>
 
+#include <getopt.h>
+
 #include "common_srs.hpp"
 #include "tensor3.hpp"
+
+static int verbose_flag = 0;
+static int problem_dimension = 4;
+static int number_of_simulated_sequences = 25;
+static int size_of_simulated_sequence = 1000;
+
 
 // || vec(P1) - vec(P2) ||_1
 double L1Diff(Tensor3& P1, Tensor3& P2) {
@@ -205,7 +213,7 @@ Tensor3 SRSGradientUpdate(Tensor3& X, double step_size,
 
 Tensor3 EstimateSRS(std::vector< std::vector<int> >& seqs) {
   int dim = MaximumIndex(seqs) + 1;
-#if 1
+#if 0
   Tensor3 X(dim);
   X.SetGlobalValue(1.0);
   NormalizeStochastic(X);
@@ -214,8 +222,8 @@ Tensor3 EstimateSRS(std::vector< std::vector<int> >& seqs) {
 #endif
   double curr_ll = LogLikelihood(X, seqs);
 
-  int niter = 100;
-  double starting_step_size = 1e-6;
+  int niter = 10000;
+  double starting_step_size = 1e-5;
   for (int iter = 0; iter < niter; ++iter) {
     double step_size = starting_step_size / (iter + 1);
     Tensor3 grad = Gradient(seqs, X);
@@ -224,7 +232,9 @@ Tensor3 EstimateSRS(std::vector< std::vector<int> >& seqs) {
     if (next_ll > curr_ll) {
       X = Y;
       curr_ll = next_ll;
-      // std::cerr << curr_ll << " " << step_size << std::endl;
+      if (iter % 100 == 0 && verbose_flag) {
+	std::cerr << curr_ll << " " << step_size << std::endl;
+      }
     }
   }
   return X;
@@ -271,11 +281,59 @@ double SecondOrderLogLikelihood(Tensor3& P,
   return ll;
 }
 
+void HandleOptions(int argc, char **argv) {
+  static struct option long_options[] =
+    {
+      {"verbose",       no_argument, &verbose_flag, 1},
+      {"dimension",     required_argument, 0, 'd'},
+      {"numsequences",  required_argument, 0, 'n'},
+      {"sequence",      required_argument, 0, 's'},
+      {0, 0, 0, 0}
+    };
+
+  int c;
+
+  while (1) {
+      int option_index = 0;
+      c = getopt_long (argc, argv, "d:n:s:",
+                       long_options, &option_index);
+      /* Detect the end of the options. */
+      if (c == -1) {
+        break;
+      }
+
+      switch (c) {
+        case 0:
+          /* If this option set a flag, do nothing else now. */
+          if (long_options[option_index].flag != 0)
+            break;
+        case 'd':
+	  problem_dimension = atoi(optarg);
+          break;
+        case 'n':
+	  number_of_simulated_sequences = atoi(optarg);
+          break;
+        case 's':
+	  size_of_simulated_sequence = atoi(optarg);
+          break;
+        default:
+          abort();
+      }
+  }
+
+}
+
 
 int main(int argc, char **argv) {
-  int N = 5;
-  int num_seqs = 100;
-  int samples_per_seq = 1000;
+  HandleOptions(argc, argv);
+  int N = problem_dimension;
+  int num_seqs = number_of_simulated_sequences;
+  int samples_per_seq = size_of_simulated_sequence;
+
+  std::cout << N << " "
+	    << num_seqs << " "
+	    << samples_per_seq << std::endl;
+
 
   std::vector< std::vector<int> > seqs;
   Tensor3 P = RandomTPT(N);
@@ -290,14 +348,17 @@ int main(int argc, char **argv) {
 
   std::cout << "Oracle LL:       " << oracle_ll    << std::endl
 	    << "Empirical LL:    " << empirical_ll << std::endl
-	    << "Second-order LL: " << so_ll        << std::endl
 	    << "SRS LL:          " << srs_ll       << std::endl
+	    << "Second-order LL: " << so_ll        << std::endl
 	    << std::endl;
 
   int num_total = (samples_per_seq - 1) * num_seqs;
-  //double ll_diff1 = exp((empirical_ll - srs_ll) / num_total);
-  //double ll_diff2 = exp((oracle_ll - srs_ll) / num_total);
-  //std::cout << ll_diff1 << " " << ll_diff2 << std::endl;
+  double ll_diff1 = exp((empirical_ll - oracle_ll) / num_total);
+  double ll_diff2 = exp((srs_ll - oracle_ll) / num_total);
+  std::cout << "LL(empirical to oracle) = " << ll_diff1 << std::endl
+	    << "LL(learned to oracle)   = " << ll_diff2 << std::endl
+	    << std::endl;
+    
   double P_diff1 = L1Diff(P, PSO) / (N * N);
   double P_diff2 = L1Diff(P, PSRS) / (N * N);
   std::cout << "|| vec(P) - vec(PSO) ||_1  = " << P_diff1 << std::endl
