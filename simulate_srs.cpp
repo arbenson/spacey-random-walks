@@ -4,6 +4,107 @@
 #include "common_srs.hpp"
 #include "tensor3.hpp"
 
+// || vec(P1) - vec(P2) ||_1
+double L1Diff(Tensor3& P1, Tensor3& P2) {
+  double diff = 0.0;
+  int dimension = P1.dim();
+  assert(dimension == P2.dim());
+  for (int i = 0; i < dimension; ++i) {
+    for (int j = 0; j < dimension; ++j) {
+      for (int k = 0; k < dimension; ++k) {
+        diff += std::abs(P1(i, j, k) - P2(i, j, k));
+      }
+    }
+  }
+  return diff;
+}
+
+// || v1 - v2 ||_1
+double L1Diff(std::vector<double>& v1, std::vector<double>& v2) {
+  double diff = 0.0;
+  assert(v1.size() == v2.size());
+  for (int i = 0; i < v1.size(); ++i) {
+    diff += std::abs(v1[i] - v2[i]);
+  }
+  return diff;
+}
+
+std::vector<double> Apply(Tensor3& P, std::vector<double>& x) {
+  std::vector<double> y(x.size(), 0.0);
+  int dim = P.dim();
+  for (int i = 0; i < dim; ++i) {
+    for (int j = 0; j < dim; ++j) {
+      for (int k = 0; k < dim; ++k) {
+        // P(i, j, k) is column (j, k) and row (i, j)
+        y[i * dim + j] += P(i, j, k) * x[j * dim + k];
+      }
+    }
+  }
+  return y;
+}
+
+// y = P x^2
+std::vector<double> TensorApply(Tensor3& P, std::vector<double>& x) {
+  std::vector<double> y(x.size(), 0.0);
+  int dim = P.dim();
+  for (int i = 0; i < dim; ++i) {
+    for (int j = 0; j < dim; ++j) {
+      for (int k = 0; k < dim; ++k) {
+        // P(i, j, k) is column (j, k) and row (i, j)
+        y[i] += P.Get(i, j, k) * x[j] * x[k];
+      }
+    }
+  }
+  return y;
+}
+
+std::vector<double> Stationary(Tensor3& P) {
+  int dim = P.dim();
+  std::vector<double> x(dim * dim, 1.0 / (dim * dim));
+  int max_iter = 1000;
+  double tol = 1e-12;
+  for (int iter = 0; iter < max_iter; ++iter) {
+    std::vector<double> x_next = Apply(P, x);
+    // Check the difference
+    double diff = L1Diff(x_next, x);
+    x = x_next;
+    x = Normalized(x);
+    // Stop if difference is small enough
+    if (diff < tol) { break; }
+  }
+  return x;
+}
+
+std::vector<double> StationaryMarginals(Tensor3& P) {
+  std::vector<double> st = Stationary(P);
+  int dim = P.dim();
+  std::vector<double> marginals(dim, 0.0);
+  for (int i = 0; i < st.size(); ++i) {
+    int marginal_ind = (i % dim);
+    marginals[marginal_ind] += st[i];
+  }
+  return marginals;
+}
+
+std::vector<double> SpaceyStationary(Tensor3& P) {
+  int dim = P.dim();
+  std::vector<double> x(dim, 1.0 / dim);
+  int max_iter = 1000;
+  double tol = 1e-12;
+  for (int iter = 0; iter < max_iter; ++iter) {
+    std::vector<double> x_next = TensorApply(P, x);
+    // Check the difference
+    double diff = L1Diff(x_next, x);
+    for (int j = 0; j < x.size(); ++j) {
+      x[j] = 0.99 * x_next[j] + 0.01 * x[j];
+    }
+    x = Normalized(x);
+    // Stop if difference is small enough
+    if (diff < tol) { break; }
+  }
+  return x;
+}
+
 Tensor3 EmpiricalSecondOrder(std::vector< std::vector<int> >& seqs) {
   int dim = MaximumIndex(seqs) + 1;
   Tensor3 X(dim);
@@ -12,7 +113,7 @@ Tensor3 EmpiricalSecondOrder(std::vector< std::vector<int> >& seqs) {
     for (int l = 1; l < seq.size(); ++l) {
       int k = 0;  // Starts at zero by default
       if (l > 1) {
-	k = seq[l - 2];
+        k = seq[l - 2];
       }
       int j = seq[l - 1];
       int i = seq[l];
@@ -23,26 +124,24 @@ Tensor3 EmpiricalSecondOrder(std::vector< std::vector<int> >& seqs) {
   return X;
 }
 
-
 Tensor3 Gradient(std::vector< std::vector<int> >& seqs,
-		 Tensor3& P) {
+                 Tensor3& P) {
   Tensor3 G(P.dim());
   G.SetGlobalValue(0.0);
   for (auto& seq : seqs) {
     std::vector<int> history(P.dim(), 1);
-    for (int l = 0; l < seq.size(); ++l) {
+    history[seq[0]] += 1;
+    for (int l = 1; l < seq.size(); ++l) {
       std::vector<double> occupancy = Normalized(history);
       int i = seq[l];
-      int j = 0;  // always start at 0
-      if (l > 0) {
-	int j = seq[l - 1];
-      }
+      int j = seq[l - 1];
+
       double sum = 0.0;
       for (int k = 0; k < P.dim(); ++k) {
-	sum += occupancy[k] * P(i, j, k);
+        sum += occupancy[k] * P(i, j, k);
       }
       for (int k = 0; k < P.dim(); ++k) {
-	G(i, j, k) = G.Get(i, j, k) + occupancy[k] / sum;
+        G(i, j, k) = G.Get(i, j, k) + occupancy[k] / sum;
       }
       history[i] += 1;
     }
@@ -54,41 +153,21 @@ double LogLikelihood(Tensor3& P, std::vector< std::vector<int> >& seqs) {
   double ll = 0.0;
   for (auto& seq : seqs) {
     std::vector<int> history(P.dim(), 1);
-    for (int l = 0; l < seq.size(); ++l) {
+    history[seq[0]] += 1;
+    for (int l = 1; l < seq.size(); ++l) {
       std::vector<double> occupancy = Normalized(history);
       int i = seq[l];
-      int j = 0;  // always start at 0
-      if (l > 0) {
-	int j = seq[l - 1];
-      }
+      int j = seq[l - 1];
+
       double sum = 0.0;
       for (int k = 0; k < occupancy.size(); ++k) {
-	sum += occupancy[k] * P(i, j, k);
+        sum += occupancy[k] * P(i, j, k);
       }
       ll += log(sum);
+      history[i] += 1;
     }
   }
   return ll;
-}
-
-
-// Sample from a discrete probability distribution.
-int Choice(const std::vector<double>& probs) {
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_real_distribution<> dis(0, 1);
-  double val = dis(gen);
-
-  double csum = 0.0;
-  for (int i = 0; i < probs.size(); ++i) {
-    csum += probs[i];
-    if (val <= csum) {
-      return i;
-    }
-  }
-  std::cerr << "WARNING: Probability vector did not sum to 1."
-	    << std::endl;
-  return probs.size() - 1;
 }
 
 // Form uniform random transition probability tensor.
@@ -100,8 +179,8 @@ Tensor3 RandomTPT(int dimension) {
   for (int i = 0; i < dimension; ++i) {
     for (int j = 0; j < dimension; ++j) {
       for (int k = 0; k < dimension; ++k) {
-	// Random uniform value
-	P(i, j, k) = dis(gen);
+        // Random uniform value
+        P(i, j, k) = dis(gen);
       }
     }
   }
@@ -110,13 +189,13 @@ Tensor3 RandomTPT(int dimension) {
 }
 
 Tensor3 SRSGradientUpdate(Tensor3& X, double step_size,
-			  Tensor3& gradient) {
+                          Tensor3& gradient) {
   int dim = X.dim();
   Tensor3 Y(dim);
   for (int i = 0; i < dim; ++i) {
     for (int j = 0; j < dim; ++j) {
       for (int k = 0; k < dim; ++k) {
-	Y(i, j, k) = X(i, j, k) + step_size * gradient(i, j, k);
+        Y(i, j, k) = X(i, j, k) + step_size * gradient(i, j, k);
       }
     }
   }
@@ -135,7 +214,7 @@ Tensor3 EstimateSRS(std::vector< std::vector<int> >& seqs) {
 #endif
   double curr_ll = LogLikelihood(X, seqs);
 
-  int niter = 1000;
+  int niter = 100;
   double starting_step_size = 1e-6;
   for (int iter = 0; iter < niter; ++iter) {
     double step_size = starting_step_size / (iter + 1);
@@ -145,14 +224,14 @@ Tensor3 EstimateSRS(std::vector< std::vector<int> >& seqs) {
     if (next_ll > curr_ll) {
       X = Y;
       curr_ll = next_ll;
-      std::cerr << curr_ll << " " << step_size << std::endl;
+      // std::cerr << curr_ll << " " << step_size << std::endl;
     }
   }
   return X;
 }
 
 void Simulate(Tensor3& P, std::vector< std::vector<int> >& seqs,
-	      int num_seqs, int num_samples) {
+              int num_seqs, int num_samples) {
   int dim = P.dim();
   seqs.clear();
   for (int seq_ind = 0; seq_ind < num_seqs; ++seq_ind) {
@@ -177,14 +256,13 @@ void Simulate(Tensor3& P, std::vector< std::vector<int> >& seqs,
 }
 
 double SecondOrderLogLikelihood(Tensor3& P,
-				std::vector< std::vector<int> >& seqs) {
+                                std::vector< std::vector<int> >& seqs) {
   double ll = 0.0;
   for (auto& seq : seqs) {
     for (int l = 1; l < seq.size(); ++l) {
-      int k = 0;  // Always starts at 0
-      if (l > 1) {
-	k = seq[l - 2];
-      }
+      // Always starts at 0
+      int k = 0;
+      if (l > 1) { k = seq[l - 2]; }
       int j = seq[l - 1];
       int i = seq[l];
       ll += log(P(i, j, k));
@@ -193,24 +271,11 @@ double SecondOrderLogLikelihood(Tensor3& P,
   return ll;
 }
 
-double L1Diff(Tensor3& P1, Tensor3& P2) {
-  double diff = 0.0;
-  int dimension = P1.dim();
-  assert(dimension == P2.dim());
-  for (int i = 0; i < dimension; ++i) {
-    for (int j = 0; j < dimension; ++j) {
-      for (int k = 0; k < dimension; ++k) {
-	diff += std::abs(P1(i, j, k) - P2(i, j, k));
-      }
-    }
-  }
-  return diff;
-}
 
 int main(int argc, char **argv) {
   int N = 5;
-  int num_seqs = 10;
-  int samples_per_seq = 10000;
+  int num_seqs = 100;
+  int samples_per_seq = 1000;
 
   std::vector< std::vector<int> > seqs;
   Tensor3 P = RandomTPT(N);
@@ -223,16 +288,30 @@ int main(int argc, char **argv) {
   Tensor3 PSRS = EstimateSRS(seqs);
   double srs_ll = LogLikelihood(PSRS, seqs);
 
-  std::cout << "Oracle LL: " << oracle_ll << std::endl;
-  std::cout << "Empirical LL: " << empirical_ll << std::endl;
-  std::cout << "Second-order LL: "<< so_ll << std::endl;
-  std::cout << "SRS LL: "<< srs_ll << std::endl;
+  std::cout << "Oracle LL:       " << oracle_ll    << std::endl
+	    << "Empirical LL:    " << empirical_ll << std::endl
+	    << "Second-order LL: " << so_ll        << std::endl
+	    << "SRS LL:          " << srs_ll       << std::endl
+	    << std::endl;
 
   int num_total = (samples_per_seq - 1) * num_seqs;
-  double ll_diff1 = exp((empirical_ll - srs_ll) / num_total);
-  double ll_diff2 = exp((oracle_ll - srs_ll) / num_total);
-  std::cout << ll_diff1 << " " << ll_diff2 << std::endl;
+  //double ll_diff1 = exp((empirical_ll - srs_ll) / num_total);
+  //double ll_diff2 = exp((oracle_ll - srs_ll) / num_total);
+  //std::cout << ll_diff1 << " " << ll_diff2 << std::endl;
   double P_diff1 = L1Diff(P, PSO) / (N * N);
   double P_diff2 = L1Diff(P, PSRS) / (N * N);
-  std::cout << P_diff1 << " " << P_diff2 << std::endl;
+  std::cout << "|| vec(P) - vec(PSO) ||_1  = " << P_diff1 << std::endl
+	    << "|| vec(P) - vec(PSRS) ||_1 = " << P_diff2 << std::endl
+	    << std::endl;
+
+  std::vector<double> srs_st_orig       = SpaceyStationary(P);
+  std::vector<double> srs_st_recovered  = SpaceyStationary(PSRS);
+  std::vector<double> srs_st_so         = SpaceyStationary(PSO);
+  std::vector<double> marginal_st_so    = StationaryMarginals(PSO);
+  double st_diff1 = L1Diff(srs_st_orig, marginal_st_so);
+  double st_diff2 = L1Diff(srs_st_orig, srs_st_recovered);
+  double st_diff3 = L1Diff(srs_st_orig, srs_st_so);
+  std::cout << "|| SRS(P) - MarkovMarginal(PSO) ||_1 = " << st_diff1 << std::endl
+	    << "|| SRS(P) - SRS(PSRS) ||_1           = " << st_diff2 << std::endl
+	    << "|| SRS(P) - SRS(PSO) ||_1            = " << st_diff3 << std::endl;
 }

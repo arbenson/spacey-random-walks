@@ -103,4 +103,24 @@ std::vector<double> Normalized(const std::vector<T>& vec) {
   return nvec;
 }
 
+// Sample from a discrete probability distribution.
+int Choice(const std::vector<double>& probs) {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<> dis(0, 1);
+  double val = dis(gen);
+
+  double csum = 0.0;
+  for (int i = 0; i < probs.size(); ++i) {
+    csum += probs[i];
+    if (val <= csum) {
+      return i;
+    }
+  }
+  std::cerr << "WARNING: Probability vector did not sum to 1."
+	    << std::endl;
+  return probs.size() - 1;
+}
+
+
 #endif  // _COMMON_SRS_HPP_
