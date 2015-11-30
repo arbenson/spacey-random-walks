@@ -1,7 +1,13 @@
 #include "common_srs.hpp"
-#include <iostream>
 
-int MaximumIndex(std::vector< std::vector<int> >& seqs) {
+#include <cassert>
+#include <iostream>
+#include <random>
+#include <vector>
+
+#include "tensor3.hpp"
+
+int MaximumIndex(const std::vector< std::vector<int> >& seqs) {
   int max_ind = 0;
   for (auto& seq : seqs) {
     for (int val : seq) {
@@ -11,7 +17,7 @@ int MaximumIndex(std::vector< std::vector<int> >& seqs) {
   return max_ind;
 }
 
-std::vector<double> EuclideanProjectSimplex(const std::vector<double>& vec) {
+std::vector<double> SimplexProjection(const std::vector<double>& vec) {
   std::vector<double> mu = vec;
   std::sort(mu.begin(), mu.end(), std::greater<int>());
   // Get cumulative sum
@@ -39,12 +45,12 @@ std::vector<double> EuclideanProjectSimplex(const std::vector<double>& vec) {
   return ret;
 }
 
-void Project(Tensor3& Y) {
+void ProjectColumnsOntoSimplex(Tensor3& Y) {
   int dim = Y.dim();
   for (int j = 0; j < dim; ++j) {
     for (int k = 0; k < dim; ++k) {
       auto col = Y.GetSlice1(j, k);
-      Y.SetSlice1(j, k, EuclideanProjectSimplex(col));
+      Y.SetSlice1(j, k, SimplexProjection(col));
     }
   }
 }
@@ -99,7 +105,7 @@ double L1Diff(const Tensor3& P1, const Tensor3& P2) {
   return diff;
 }
 
-double L1Diff(std::vector<double>& v1, std::vector<double>& v2) {
+double L1Diff(const std::vector<double>& v1, const std::vector<double>& v2) {
   double diff = 0.0;
   assert(v1.size() == v2.size());
   for (int i = 0; i < v1.size(); ++i) {

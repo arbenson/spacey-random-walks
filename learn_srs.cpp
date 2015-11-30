@@ -14,15 +14,15 @@
 static double fraction_init = 0.5;
 static double fraction_train = 0.4;
 
-int StartingIndex(std::vector<int>& seq) {
+int StartingIndex(const std::vector<int>& seq) {
   return floor((fraction_init) * seq.size());
 }
 
-int EndingIndex(std::vector<int>& seq) {
+int EndingIndex(const std::vector<int>& seq) {
   return floor((fraction_init + fraction_train) * seq.size());
 }
 
-std::vector<int> InitializeHistory(std::vector<int> seq, int dimension) {
+std::vector<int> InitializeHistory(const std::vector<int>& seq, int dimension) {
   std::vector<int> history(dimension, 1);
   for (int i = 0; i < StartingIndex(seq); ++i) {
     history[seq[i]] += 1;
@@ -30,8 +30,8 @@ std::vector<int> InitializeHistory(std::vector<int> seq, int dimension) {
   return history;
 }
 
-Tensor3 Gradient(std::vector< std::vector<int> >& seqs,
-		 Tensor3& P) {
+Tensor3 Gradient(const std::vector< std::vector<int> >& seqs,
+                 const Tensor3& P) {
   Tensor3 G(P.dim());
   G.SetGlobalValue(0.0);
   for (auto& seq : seqs) {
@@ -42,11 +42,11 @@ Tensor3 Gradient(std::vector< std::vector<int> >& seqs,
       int j = seq[l - 1];
       double sum = 0.0;
       for (int k = 0; k < P.dim(); ++k) {
-	sum += occupancy[k] * P(i, j, k);
+        sum += occupancy[k] * P(i, j, k);
       }
       assert (sum > 0.0);
       for (int k = 0; k < P.dim(); ++k) {
-	G(i, j, k) = G.Get(i, j, k) + occupancy[k] / sum;
+        G(i, j, k) = G.Get(i, j, k) + occupancy[k] / sum;
       }
       history[i] += 1;
     }
@@ -54,7 +54,8 @@ Tensor3 Gradient(std::vector< std::vector<int> >& seqs,
   return G;
 }
 
-double LogLikelihoodTrain(std::vector< std::vector<int> >& seqs, Tensor3& P) {
+double LogLikelihoodTrain(const std::vector< std::vector<int> >& seqs,
+                          const Tensor3& P) {
   double ll = 0.0;
   for (auto& seq : seqs) {
     std::vector<int> history = InitializeHistory(seq, P.dim());
@@ -64,7 +65,7 @@ double LogLikelihoodTrain(std::vector< std::vector<int> >& seqs, Tensor3& P) {
       int j = seq[l - 1];
       double sum = 0.0;
       for (int k = 0; k < occupancy.size(); ++k) {
-	sum += occupancy[k] * P(i, j, k);
+        sum += occupancy[k] * P(i, j, k);
       }
       ll += log(sum);
       history[i] += 1;
@@ -73,7 +74,8 @@ double LogLikelihoodTrain(std::vector< std::vector<int> >& seqs, Tensor3& P) {
   return ll;
 }
 
-double SpaceyRMSE(std::vector< std::vector<int> >& seqs, Tensor3& P) {
+double SpaceyRMSE(const std::vector< std::vector<int> >& seqs,
+                  const Tensor3& P) {
   double ll = 0.0;
   double err = 0.0;
   int num = 0;
@@ -89,7 +91,7 @@ double SpaceyRMSE(std::vector< std::vector<int> >& seqs, Tensor3& P) {
       int j = seq[l - 1];
       double sum = 0.0;
       for (int k = 0; k < occupancy.size(); ++k) {
-	sum += occupancy[k] * P(i, j, k);
+        sum += occupancy[k] * P(i, j, k);
       }
       double val = 1 - sum;
       err += val * val;
@@ -101,7 +103,7 @@ double SpaceyRMSE(std::vector< std::vector<int> >& seqs, Tensor3& P) {
 }
 
 void ReadSequences(std::string filename,
-		   std::vector< std::vector<int> >& seqs) {
+                   std::vector< std::vector<int> >& seqs) {
   std::string line;
   std::ifstream infile(filename);
   while (std::getline(infile, line)) {
@@ -117,24 +119,24 @@ void ReadSequences(std::string filename,
   }
 }
 
-Tensor3 UpdateAndProject(Tensor3& X, Tensor3& G, double step_size) {
+Tensor3 UpdateAndProject(const Tensor3& X, const Tensor3& G, double step_size) {
   int N = X.dim();
   Tensor3 Y(N);
   for (int i = 0; i < N; ++i) {
     for (int j = 0; j < N; ++j) {
       for (int k = 0; k < N; ++k) {
-	double xijk = X(i, j, k);
-	double gijk = G(i, j, k);
-	Y(i, j, k) = xijk + step_size * gijk;
+        double xijk = X(i, j, k);
+        double gijk = G(i, j, k);
+        Y(i, j, k) = xijk + step_size * gijk;
       }
     }
   }
-  Project(Y);
+  ProjectColumnsOntoSimplex(Y);
   return Y;
 }
 
-Tensor3 EmpiricalSecondOrder(std::vector< std::vector<int> >& seqs,
-			     bool spacey_correction) {
+Tensor3 EmpiricalSecondOrder(const std::vector< std::vector<int> >& seqs,
+                             bool spacey_correction) {
   int dim = MaximumIndex(seqs) + 1;
   Tensor3 X(dim);
   X.SetGlobalValue(0);
@@ -152,16 +154,16 @@ Tensor3 EmpiricalSecondOrder(std::vector< std::vector<int> >& seqs,
   if (spacey_correction) {
     for (int i = 0; i < dim; ++i) {
       for (int j = 0; j < dim; ++j) {
-	double max = 0.0;
-	for (int k = 0; k < dim; ++k) {
-	  max = std::max(X(i, j, k), max);
-	  if (max > 0.0) { break; }
-	}
-	if (max == 0.0) {
-	  for (int k = 0; k < dim; ++k) {
-	    X.Set(i, j, k, 1);
-	  }
-	}
+        double max = 0.0;
+        for (int k = 0; k < dim; ++k) {
+          max = std::max(X(i, j, k), max);
+          if (max > 0.0) { break; }
+        }
+        if (max == 0.0) {
+          for (int k = 0; k < dim; ++k) {
+            X.Set(i, j, k, 1);
+          }
+        }
       }
     }
   }
@@ -170,7 +172,7 @@ Tensor3 EmpiricalSecondOrder(std::vector< std::vector<int> >& seqs,
   return X;
 }
 
-Tensor3 GradientDescent(std::vector< std::vector<int> >& seqs) {
+Tensor3 EstimateSRS(const std::vector< std::vector<int> >& seqs) {
 #if 1
   Tensor3 X = EmpiricalSecondOrder(seqs, true);
 #else
@@ -195,7 +197,7 @@ Tensor3 GradientDescent(std::vector< std::vector<int> >& seqs) {
       curr_ll = update_ll;
       double gen_rmse = SpaceyRMSE(seqs, X);
       std::cerr << curr_ll << " " << step_size
-		<< " (" << gen_rmse << ")" << std::endl;
+                << " (" << gen_rmse << ")" << std::endl;
     } else {
       starting_step_size *= 0.5;
     }
@@ -229,7 +231,7 @@ double SecondOrderUniformCollapseRMSE(std::vector< std::vector<int> >& seqs) {
   for (int i = 0; i < P.dim(); ++i) {
     for (int j = 0; j < P.dim(); ++j) {
       for (int k = 0; k < P.dim(); ++k) {
-	Pc(i, j) = Pc.Get(i, j) + P(i, j, k) / P.dim();
+        Pc(i, j) = Pc.Get(i, j) + P(i, j, k) / P.dim();
       }
     }
   }
@@ -273,7 +275,7 @@ double FirstOrderRMSE(std::vector< std::vector<int> >& seqs) {
       col = std::vector<double>(col.size(), 1.0 / col.size());
     } else {
       for (int i = 0; i < col.size(); ++i) {
-	col[i] /= sum;
+        col[i] /= sum;
       }
     }
     X.SetColumn(j, col);
@@ -299,12 +301,12 @@ int main(int argc, char **argv) {
   ReadSequences(argv[1], seqs);
   std::cerr << seqs.size() << " sequences." << std::endl;
   std::cerr << "First order RMSE: "
-	    << FirstOrderRMSE(seqs) << std::endl
-	    << "Second order RMSE: "
-	    << SecondOrderRMSE(seqs) << std::endl
-	    << "Second order uniform collapse RMSE: "
-	    << SecondOrderUniformCollapseRMSE(seqs) << std::endl;
-  Tensor3 PSRS = GradientDescent(seqs);
+            << FirstOrderRMSE(seqs) << std::endl
+            << "Second order RMSE: "
+            << SecondOrderRMSE(seqs) << std::endl
+            << "Second order uniform collapse RMSE: "
+            << SecondOrderUniformCollapseRMSE(seqs) << std::endl;
+  Tensor3 PSRS = EstimateSRS(seqs);
   Tensor3 PSO = EmpiricalSecondOrder(seqs, false);
   int N = PSRS.dim();
   double diff = L1Diff(PSRS, PSO) / (N * N);

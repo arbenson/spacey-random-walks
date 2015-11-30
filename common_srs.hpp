@@ -1,8 +1,9 @@
 #ifndef _COMMON_SRS_HPP_
 #define _COMMON_SRS_HPP_
 
-#include <cassert>
-#include <random>
+#include <cmath>
+#include <vector>
+
 #include "tensor3.hpp"
 
 template <typename T>
@@ -34,17 +35,17 @@ std::vector<double> Normalized(const std::vector<T>& vec) {
 }
 
 // Maximum index used for all states (starts at 0).
-int MaximumIndex(std::vector< std::vector<int> >& seqs);
+int MaximumIndex(const std::vector< std::vector<int> >& seqs);
 
 // Minimum l2 projection onto the simplex.
-std::vector<double> EuclideanProjectSimplex(const std::vector<double>& vec);
+std::vector<double> SimplexProjection(const std::vector<double>& vec);
 
 // Normalize columns of a transition probability tensor to be stochastic.
 void NormalizeStochastic(Tensor3& P);
 
-// Use the minimum l2 projection to project each column of the
-// tensor onto the simplex.
-void Project(Tensor3& Y);
+// Use the minimum l2 projection to project each column of the tensor onto the
+// simplex.
+void ProjectColumnsOntoSimplex(Tensor3& Y);
 
 // Sample from a discrete probability distribution.
 int Choice(const std::vector<double>& probs);
@@ -53,6 +54,6 @@ int Choice(const std::vector<double>& probs);
 double L1Diff(const Tensor3& P1, const Tensor3& P2);
 
 // || v1 - v2 ||_1
-double L1Diff(std::vector<double>& v1, std::vector<double>& v2);
+double L1Diff(const std::vector<double>& v1, const std::vector<double>& v2);
 
 #endif  // _COMMON_SRS_HPP_

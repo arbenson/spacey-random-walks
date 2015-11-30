@@ -3,6 +3,7 @@
 
 #include <cassert>
 
+// Simple wrapper around an N x N x N tensor
 template <typename T>
 class CubeTensor {
 public:
@@ -106,6 +107,7 @@ private:
 };
 
 
+// Simple wrapper around an N x N tensor
 template <typename T>
 class SquareMatrix {
 public:

@@ -11,7 +11,7 @@ static int problem_dimension = 4;
 static int number_of_simulated_sequences = 25;
 static int size_of_simulated_sequence = 1000;
 
-std::vector<double> Apply(Tensor3& P, std::vector<double>& x) {
+std::vector<double> Apply(const Tensor3& P, const std::vector<double>& x) {
   std::vector<double> y(x.size(), 0.0);
   int dim = P.dim();
   for (int i = 0; i < dim; ++i) {
@@ -26,7 +26,7 @@ std::vector<double> Apply(Tensor3& P, std::vector<double>& x) {
 }
 
 // y = P x^2
-std::vector<double> TensorApply(Tensor3& P, std::vector<double>& x) {
+std::vector<double> TensorApply(const Tensor3& P, const std::vector<double>& x) {
   std::vector<double> y(x.size(), 0.0);
   int dim = P.dim();
   for (int i = 0; i < dim; ++i) {
@@ -40,7 +40,7 @@ std::vector<double> TensorApply(Tensor3& P, std::vector<double>& x) {
   return y;
 }
 
-std::vector<double> Stationary(Tensor3& P) {
+std::vector<double> Stationary(const Tensor3& P) {
   int dim = P.dim();
   std::vector<double> x(dim * dim, 1.0 / (dim * dim));
   int max_iter = 1000;
@@ -57,7 +57,7 @@ std::vector<double> Stationary(Tensor3& P) {
   return x;
 }
 
-std::vector<double> StationaryMarginals(Tensor3& P) {
+std::vector<double> StationaryMarginals(const Tensor3& P) {
   std::vector<double> st = Stationary(P);
   int dim = P.dim();
   std::vector<double> marginals(dim, 0.0);
@@ -68,7 +68,7 @@ std::vector<double> StationaryMarginals(Tensor3& P) {
   return marginals;
 }
 
-std::vector<double> SpaceyStationary(Tensor3& P) {
+std::vector<double> SpaceyStationary(const Tensor3& P) {
   int dim = P.dim();
   std::vector<double> x(dim, 1.0 / dim);
   int max_iter = 1000;
@@ -87,7 +87,7 @@ std::vector<double> SpaceyStationary(Tensor3& P) {
   return x;
 }
 
-Tensor3 EmpiricalSecondOrder(std::vector< std::vector<int> >& seqs) {
+Tensor3 EmpiricalSecondOrder(const std::vector< std::vector<int> >& seqs) {
   int dim = MaximumIndex(seqs) + 1;
   Tensor3 X(dim);
   X.SetGlobalValue(0);
@@ -106,8 +106,8 @@ Tensor3 EmpiricalSecondOrder(std::vector< std::vector<int> >& seqs) {
   return X;
 }
 
-Tensor3 Gradient(std::vector< std::vector<int> >& seqs,
-                 Tensor3& P) {
+Tensor3 Gradient(const std::vector< std::vector<int> >& seqs,
+                 const Tensor3& P) {
   Tensor3 G(P.dim());
   G.SetGlobalValue(0.0);
   for (auto& seq : seqs) {
@@ -131,7 +131,7 @@ Tensor3 Gradient(std::vector< std::vector<int> >& seqs,
   return G;
 }
 
-double LogLikelihood(Tensor3& P, std::vector< std::vector<int> >& seqs) {
+double LogLikelihood(const Tensor3& P, const std::vector< std::vector<int> >& seqs) {
   double ll = 0.0;
   for (auto& seq : seqs) {
     std::vector<int> history(P.dim(), 1);
@@ -170,8 +170,8 @@ Tensor3 RandomTPT(int dimension) {
   return P;
 }
 
-Tensor3 SRSGradientUpdate(Tensor3& X, double step_size,
-                          Tensor3& gradient) {
+Tensor3 SRSGradientUpdate(const Tensor3& X, double step_size,
+                          const Tensor3& gradient) {
   int dim = X.dim();
   Tensor3 Y(dim);
   for (int i = 0; i < dim; ++i) {
@@ -181,11 +181,11 @@ Tensor3 SRSGradientUpdate(Tensor3& X, double step_size,
       }
     }
   }
-  Project(Y);
+  ProjectColumnsOntoSimplex(Y);
   return Y;
 }
 
-Tensor3 EstimateSRS(std::vector< std::vector<int> >& seqs) {
+Tensor3 EstimateSRS(const std::vector< std::vector<int> >& seqs) {
   int dim = MaximumIndex(seqs) + 1;
 #if 0
   Tensor3 X(dim);
@@ -216,7 +216,7 @@ Tensor3 EstimateSRS(std::vector< std::vector<int> >& seqs) {
   return X;
 }
 
-void Simulate(Tensor3& P, std::vector< std::vector<int> >& seqs,
+void Simulate(const Tensor3& P, std::vector< std::vector<int> >& seqs,
               int num_seqs, int num_samples) {
   int dim = P.dim();
   seqs.clear();
@@ -241,8 +241,8 @@ void Simulate(Tensor3& P, std::vector< std::vector<int> >& seqs,
   }
 }
 
-double SecondOrderLogLikelihood(Tensor3& P,
-                                std::vector< std::vector<int> >& seqs) {
+double SecondOrderLogLikelihood(const Tensor3& P,
+                                const std::vector< std::vector<int> >& seqs) {
   double ll = 0.0;
   for (auto& seq : seqs) {
     for (int l = 1; l < seq.size(); ++l) {
