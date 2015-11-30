@@ -1,7 +1,36 @@
 #ifndef _COMMON_SRS_HPP_
 #define _COMMON_SRS_HPP_
 
+#include <random>
 #include "tensor3.hpp"
+
+template <typename T>
+T Sum(const std::vector<T>& vec) {
+  T sum = 0;
+  for (T v : vec) {
+    sum += v;
+  }
+  return sum;
+}
+
+template <typename T>
+T AbsSum(const std::vector<T>& vec) {
+  T sum = 0;
+  for (T v : vec) {
+    sum += std::abs(v);
+  }
+  return sum;
+}
+
+template <typename T>
+std::vector<double> Normalized(const std::vector<T>& vec) {
+  std::vector<double> nvec(vec.size());
+  double sum = static_cast<double>(AbsSum(vec));
+  for (int i = 0; i < nvec.size(); ++i) {
+    nvec[i] = static_cast<double>(vec[i]) / sum;
+  }
+  return nvec;
+}
 
 int MaximumIndex(std::vector< std::vector<int> >& seqs) {
   int max_ind = 0;
@@ -32,6 +61,7 @@ std::vector<double> EuclideanProjectSimplex(const std::vector<double>& vec) {
   for (int j = 0; j <= rho; ++j) {
     csum += mu[j];
   }
+  assert(rho + 1.0 > 0.0);
   double theta = (csum - 1.0) / (rho + 1.0);
 
   std::vector<double> ret = vec;
@@ -47,10 +77,7 @@ void NormalizeStochastic(Tensor3& P) {
   for (int k = 0; k < dim; ++k) {
     for (int j = 0; j < dim; ++j) {
       std::vector<double> col = P.GetSlice1(j, k);
-      double sum = 0.0;
-      for (int i = 0; i < col.size(); ++i) {
-	sum += col[i];
-      }
+      double sum = Sum(col);
       if (sum == 0.0) {
 	col = std::vector<double>(col.size(), 1.0 / col.size());
       } else {
@@ -75,34 +102,6 @@ void Project(Tensor3& Y) {
   }
 }
 
-template <typename T>
-T Sum(const std::vector<T>& vec) {
-  T sum = 0;
-  for (T v : vec) {
-    sum += v;
-  }
-  return sum;
-}
-
-template <typename T>
-T AbsSum(const std::vector<T>& vec) {
-  T sum = 0;
-  for (T v : vec) {
-    sum += std::abs(v);
-  }
-  return sum;
-}
-
-template <typename T>
-std::vector<double> Normalized(const std::vector<T>& vec) {
-  std::vector<double> nvec(vec.size());
-  double sum = static_cast<double>(AbsSum(vec));
-  for (int i = 0; i < nvec.size(); ++i) {
-    nvec[i] = static_cast<double>(vec[i]) / sum;
-  }
-  return nvec;
-}
-
 // Sample from a discrete probability distribution.
 int Choice(const std::vector<double>& probs) {
   std::random_device rd;
@@ -122,5 +121,29 @@ int Choice(const std::vector<double>& probs) {
   return probs.size() - 1;
 }
 
+// || vec(P1) - vec(P2) ||_1
+double L1Diff(Tensor3& P1, Tensor3& P2) {
+  double diff = 0.0;
+  int dimension = P1.dim();
+  assert(dimension == P2.dim());
+  for (int i = 0; i < dimension; ++i) {
+    for (int j = 0; j < dimension; ++j) {
+      for (int k = 0; k < dimension; ++k) {
+        diff += std::abs(P1(i, j, k) - P2(i, j, k));
+      }
+    }
+  }
+  return diff;
+}
+
+// || v1 - v2 ||_1
+double L1Diff(std::vector<double>& v1, std::vector<double>& v2) {
+  double diff = 0.0;
+  assert(v1.size() == v2.size());
+  for (int i = 0; i < v1.size(); ++i) {
+    diff += std::abs(v1[i] - v2[i]);
+  }
+  return diff;
+}
 
 #endif  // _COMMON_SRS_HPP_

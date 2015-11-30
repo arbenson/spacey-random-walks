@@ -11,32 +11,6 @@ static int problem_dimension = 4;
 static int number_of_simulated_sequences = 25;
 static int size_of_simulated_sequence = 1000;
 
-
-// || vec(P1) - vec(P2) ||_1
-double L1Diff(Tensor3& P1, Tensor3& P2) {
-  double diff = 0.0;
-  int dimension = P1.dim();
-  assert(dimension == P2.dim());
-  for (int i = 0; i < dimension; ++i) {
-    for (int j = 0; j < dimension; ++j) {
-      for (int k = 0; k < dimension; ++k) {
-        diff += std::abs(P1(i, j, k) - P2(i, j, k));
-      }
-    }
-  }
-  return diff;
-}
-
-// || v1 - v2 ||_1
-double L1Diff(std::vector<double>& v1, std::vector<double>& v2) {
-  double diff = 0.0;
-  assert(v1.size() == v2.size());
-  for (int i = 0; i < v1.size(); ++i) {
-    diff += std::abs(v1[i] - v2[i]);
-  }
-  return diff;
-}
-
 std::vector<double> Apply(Tensor3& P, std::vector<double>& x) {
   std::vector<double> y(x.size(), 0.0);
   int dim = P.dim();
@@ -222,8 +196,8 @@ Tensor3 EstimateSRS(std::vector< std::vector<int> >& seqs) {
 #endif
   double curr_ll = LogLikelihood(X, seqs);
 
-  int niter = 10000;
-  double starting_step_size = 1e-5;
+  int niter = 20000;
+  double starting_step_size = 1;
   for (int iter = 0; iter < niter; ++iter) {
     double step_size = starting_step_size / (iter + 1);
     Tensor3 grad = Gradient(seqs, X);
@@ -232,9 +206,11 @@ Tensor3 EstimateSRS(std::vector< std::vector<int> >& seqs) {
     if (next_ll > curr_ll) {
       X = Y;
       curr_ll = next_ll;
-      if (iter % 100 == 0 && verbose_flag) {
+      if (iter % 1000 == 0 && verbose_flag) {
 	std::cerr << curr_ll << " " << step_size << std::endl;
       }
+    } else {
+      starting_step_size *= 0.9;
     }
   }
   return X;
@@ -333,7 +309,6 @@ int main(int argc, char **argv) {
   std::cout << N << " "
 	    << num_seqs << " "
 	    << samples_per_seq << std::endl;
-
 
   std::vector< std::vector<int> > seqs;
   Tensor3 P = RandomTPT(N);
