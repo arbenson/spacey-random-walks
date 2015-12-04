@@ -21,7 +21,7 @@ def GetNeighborhoods(geo_file):
 
     # Note: there is more than one polygon per neighborhood
     nbrhood_polys = []
-    nbrhood_keys = {0: 'OTHER'}
+    nbrhood_keys = {'OTHER': 0}
 
     for feature in js['features']:
         poly = shape(feature['geometry'])
@@ -61,7 +61,7 @@ def ProcessSeq(seq):
 
 def GetMedallions():
     medallions = {}
-    with open('data/medallions-1k.txt') as f:
+    with open('data/medallions-1500.txt') as f:
         for line in f:
             medallions[line.strip()] = 1
     return medallions

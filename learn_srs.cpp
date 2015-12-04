@@ -30,6 +30,35 @@ std::vector<int> InitializeHistory(const std::vector<int>& seq, int dimension) {
   return history;
 }
 
+double SpaceyPrecisionAtK(const std::vector< std::vector<int> >& seqs,
+			  const Tensor3& P, int K) {
+  int correct = 0;
+  int num = 0;
+  for (auto& seq : seqs) {
+    std::vector<int> history(P.dim(), 1);
+    for (int i = 0; i < EndingIndex(seq); ++i) {
+      history[seq[i]] += 1;
+    }
+    for (int l = EndingIndex(seq); l < seq.size(); ++l) {
+      auto occupancy = Normalized(history);
+      int i = seq[l];
+      int j = seq[l - 1];
+      std::vector<double> probs(P.dim(), 0.0);
+      for (int r = 0; r < occupancy.size(); ++r) {
+	for (int ii = 0; ii < P.dim(); ++ii) {
+	  probs[ii] += occupancy[r] * P(ii, j, r);
+	}
+      }
+      if (InTopK(probs, i, K)) {
+	++correct;
+      }
+      ++num;
+      history[i] += 1;
+    }
+  }
+  return static_cast<double>(correct) / num;
+}
+
 Tensor3 Gradient(const std::vector< std::vector<int> >& seqs,
                  const Tensor3& P) {
   Tensor3 G(P.dim());
@@ -184,20 +213,35 @@ Tensor3 EstimateSRS(const std::vector< std::vector<int> >& seqs) {
   double generalization_error = SpaceyRMSE(seqs, X);
   std::cerr << "Starting log likelihood: " << curr_ll << std::endl;
   std::cerr << "Generalization RMSE: " << generalization_error << std::endl;
+  double srs_pak1 = SpaceyPrecisionAtK(seqs, X, 1);
+  double srs_pak2 = SpaceyPrecisionAtK(seqs, X, 2);
+  double srs_pak3 = SpaceyPrecisionAtK(seqs, X, 3);
+  std::cerr << "Precisions@{1,2,3}: " 
+	    << srs_pak1 << " "
+	    << srs_pak2 << " "
+	    << srs_pak3 << std::endl;
 
   int niter = 5000;
-  double starting_step_size = 1;
+  double starting_step_size = 1e-3;
   for (int iter = 0; iter < niter; ++iter) {
-    double step_size = starting_step_size; // / (iter + 1);
+    double step_size = starting_step_size;
     Tensor3 Grad = Gradient(seqs, X);
     Tensor3 Y = UpdateAndProject(X, Grad, step_size);
     double update_ll = LogLikelihoodTrain(seqs, Y);
+
     if (update_ll > curr_ll) {
       X = Y;
       curr_ll = update_ll;
-      double gen_rmse = SpaceyRMSE(seqs, X);
-      std::cerr << curr_ll << " " << step_size
-                << " (" << gen_rmse << ")" << std::endl;
+      double gen_rmse = SpaceyRMSE(seqs, Y);
+      std::cerr << update_ll << " " << step_size
+		<< " (" << gen_rmse << ")" << std::endl;
+      srs_pak1 = SpaceyPrecisionAtK(seqs, Y, 1);
+      srs_pak2 = SpaceyPrecisionAtK(seqs, Y, 2);
+      srs_pak3 = SpaceyPrecisionAtK(seqs, Y, 3);
+      std::cerr << "Precisions@{1,2,3}: "
+		<< srs_pak1 << " "
+		<< srs_pak2 << " "
+		<< srs_pak3 << std::endl;
     } else {
       starting_step_size *= 0.5;
     }
@@ -206,8 +250,7 @@ Tensor3 EstimateSRS(const std::vector< std::vector<int> >& seqs) {
   return X;
 }
 
-double SecondOrderRMSE(std::vector< std::vector<int> >& seqs) {
-  Tensor3 P = EmpiricalSecondOrder(seqs, false);
+double SecondOrderRMSE(Tensor3& P, std::vector< std::vector<int> >& seqs) {
   double err = 0.0;
   int num = 0;
   for (auto& seq : seqs) {
@@ -223,8 +266,25 @@ double SecondOrderRMSE(std::vector< std::vector<int> >& seqs) {
   return sqrt(err / num);
 }
 
-double SecondOrderUniformCollapseRMSE(std::vector< std::vector<int> >& seqs) {
-  Tensor3 P = EmpiricalSecondOrder(seqs, false);
+double SecondOrderPrecisionAtK(Tensor3& P, std::vector< std::vector<int> >& seqs, int K) {
+  int correct = 0;
+  int num = 0;
+  for (auto& seq : seqs) {
+    for (int l = EndingIndex(seq); l < seq.size(); ++l) {
+      int r = seq[l - 2];
+      int j = seq[l - 1];
+      auto vec = P.GetSlice1(j, r);
+      int i = seq[l];
+      if (InTopK(vec, i, K)) {
+	++correct;
+      }
+      ++num;
+    }
+  }
+  return static_cast<double>(correct) / num;
+}
+
+double SecondOrderUniformCollapseRMSE(Tensor3& P, std::vector< std::vector<int> >& seqs) {
   // Collapse
   Matrix2 Pc(P.dim());
   Pc.SetGlobalValue(0.0);
@@ -251,7 +311,7 @@ double SecondOrderUniformCollapseRMSE(std::vector< std::vector<int> >& seqs) {
   return sqrt(err / num);
 }
 
-double FirstOrderRMSE(std::vector< std::vector<int> >& seqs) {
+Matrix2 EmpiricalFirstOrder(std::vector< std::vector<int> >& seqs) {
   // Fill in empirical transitions
   int dim = MaximumIndex(seqs) + 1;
   Matrix2 X(dim);
@@ -280,7 +340,10 @@ double FirstOrderRMSE(std::vector< std::vector<int> >& seqs) {
     }
     X.SetColumn(j, col);
   }
+  return X;
+}
 
+double FirstOrderRMSE(Matrix2& P, std::vector< std::vector<int> >& seqs) {
   // Compute Log Likelihood
   double err = 0;
   int num = 0;
@@ -288,7 +351,7 @@ double FirstOrderRMSE(std::vector< std::vector<int> >& seqs) {
     for (int l = EndingIndex(seq); l < seq.size(); ++l) {
       int j = seq[l - 1];
       int i = seq[l];
-      double val = (1 - X(i, j));
+      double val = (1 - P(i, j));
       err += val * val;
       ++num;
     }
@@ -296,19 +359,58 @@ double FirstOrderRMSE(std::vector< std::vector<int> >& seqs) {
   return sqrt(err / num);
 }
 
+double FirstOrderPrecisionAtK(Matrix2& P, std::vector< std::vector<int> >& seqs, int K) {
+  // Compute Log Likelihood
+  int correct = 0;
+  int num = 0;
+  for (auto& seq : seqs) {
+    for (int l = EndingIndex(seq); l < seq.size(); ++l) {
+      int j = seq[l - 1];
+      std::vector<double> col = P.GetColumn(j);
+      int i = seq[l];
+      if (InTopK(col, i, K)) {
+	++correct;
+      }
+      ++num;
+    }
+  }
+  return static_cast<double>(correct) / num;
+}
+
 int main(int argc, char **argv) {
   std::vector< std::vector<int> > seqs;
   ReadSequences(argv[1], seqs);
+
+  Tensor3 PSO = EmpiricalSecondOrder(seqs, false);
+  Matrix2 PFO = EmpiricalFirstOrder(seqs);
+
   std::cerr << seqs.size() << " sequences." << std::endl;
   std::cerr << "First order RMSE: "
-            << FirstOrderRMSE(seqs) << std::endl
+            << FirstOrderRMSE(PFO, seqs) << std::endl
             << "Second order RMSE: "
-            << SecondOrderRMSE(seqs) << std::endl
+            << SecondOrderRMSE(PSO, seqs) << std::endl
             << "Second order uniform collapse RMSE: "
-            << SecondOrderUniformCollapseRMSE(seqs) << std::endl;
+            << SecondOrderUniformCollapseRMSE(PSO, seqs) << std::endl;
+
+  double so_pak1 = SecondOrderPrecisionAtK(PSO, seqs, 1);
+  double so_pak2 = SecondOrderPrecisionAtK(PSO, seqs, 2);
+  double so_pak3 = SecondOrderPrecisionAtK(PSO, seqs, 3);
+  std::cerr << "SO precisions@{1,2,3}: "
+	    << so_pak1 << " "
+	    << so_pak2 << " "
+	    << so_pak3 << std::endl;
+
+  double fo_pak1 = FirstOrderPrecisionAtK(PFO, seqs, 1);
+  double fo_pak2 = FirstOrderPrecisionAtK(PFO, seqs, 2);
+  double fo_pak3 = FirstOrderPrecisionAtK(PFO, seqs, 3);
+  std::cerr << "FO precisions@{1,2,3}: "
+	    << fo_pak1 << " "
+	    << fo_pak2 << " "
+	    << fo_pak3 << std::endl;
+
   Tensor3 PSRS = EstimateSRS(seqs);
-  Tensor3 PSO = EmpiricalSecondOrder(seqs, false);
   int N = PSRS.dim();
   double diff = L1Diff(PSRS, PSO) / (N * N);
+
   std::cout << "Difference: " << diff << std::endl;
 }

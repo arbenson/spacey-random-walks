@@ -7,6 +7,20 @@
 
 #include "tensor3.hpp"
 
+bool InTopK(std::vector<double>& vec, int index, int K) {
+  std::vector< std::pair<double, int> > ind_vec(vec.size());
+  for (int i = 0; i < vec.size(); ++i) {
+    ind_vec[i] = std::pair<double, int>(-vec[i], i);
+  }
+  std::sort(ind_vec.begin(), ind_vec.end());
+  for (int i = 0; i < K; ++i) {
+    if (ind_vec[i].second == index) {
+      return true;
+    }
+  }
+  return false;
+}
+
 int MaximumIndex(const std::vector< std::vector<int> >& seqs) {
   int max_ind = 0;
   for (auto& seq : seqs) {

@@ -207,10 +207,10 @@ Tensor3 EstimateSRS(const std::vector< std::vector<int> >& seqs) {
       X = Y;
       curr_ll = next_ll;
       if (iter % 1000 == 0 && verbose_flag) {
-	std::cerr << curr_ll << " " << step_size << std::endl;
+	std::cerr << curr_ll << " " << iter << " " << step_size << std::endl;
       }
     } else {
-      starting_step_size *= 0.9;
+      starting_step_size *= 0.5;
     }
   }
   return X;
