@@ -1,12 +1,7 @@
 import json
 from shapely.geometry import shape, Point
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.collections import PatchCollection
-from descartes import PolygonPatch
-import geotiler
 import pickle
-from mpl_toolkits.basemap import Basemap
+import numpy as np
 
 def GetPolysNbrhoods(geojson_file):
     with open(geojson_file) as f:
@@ -66,31 +61,3 @@ def AlphaMap(seqs, nbrhood_keys, logscale=False):
         vec /= np.sum(vec)
     return {key:vec[val] for key, val in nbrhood_keys.items()}
 
-if __name__ == '__main__':
-    polys, nbrhoods = GetPolysNbrhoods('data/neighborhoods_Manhattan.geojson')
-    nbrhood_keys = ReadKeys('neighborhood_keys.pkl')
-    seqs = GetSeqs('processed_data/manhattan-year-seqs.txt')
-    bbox = GetBBox(polys, nbrhoods)
-    alpha_map = AlphaMap(seqs, nbrhood_keys, logscale=False)
-
-    # Display the image
-    fig = plt.figure()
-    ax = fig.gca()
-
-    z = 12
-    toner = geotiler.find_provider('stamen-toner-lite')
-    mm = geotiler.Map(extent=bbox, zoom=z, provider=toner)
-    img = geotiler.render_map(mm)
-    img.save('test.png')
-    ax.imshow(img)
-    ax.get_xaxis().set_visible(False)
-    ax.get_yaxis().set_visible(False)
-
-    for poly, nbrhood in zip(polys, nbrhoods):
-        coords = poly['coordinates'][0]
-        poly['coordinates'][0] = [mm.rev_geocode(p) for p in coords]
-        patch = PolygonPatch(poly, alpha=-1.0 / np.log(alpha_map[nbrhood]))
-        ax.add_patch(patch)
-
-    plt.savefig('taxi-distribution.png', dpi=200, bbox_inches='tight')
-    plt.show()

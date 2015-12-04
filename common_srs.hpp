@@ -31,7 +31,7 @@ T L1Norm(const std::vector<T>& vec) {
 template <typename T>
 std::vector<double> Normalized(const std::vector<T>& vec) {
   std::vector<double> nvec(vec.size());
-  double sum = L1Norm<double>(vec);
+  double sum = L1Norm(vec);
   for (int i = 0; i < nvec.size(); ++i) {
     nvec[i] = static_cast<double>(vec[i]) / sum;
   }

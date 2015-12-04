@@ -222,7 +222,7 @@ Tensor3 EstimateSRS(const std::vector< std::vector<int> >& seqs) {
 	    << srs_pak3 << std::endl;
 
   int niter = 5000;
-  double starting_step_size = 1e-3;
+  double starting_step_size = 1e-6;
   for (int iter = 0; iter < niter; ++iter) {
     double step_size = starting_step_size;
     Tensor3 Grad = Gradient(seqs, X);
@@ -413,4 +413,20 @@ int main(int argc, char **argv) {
   double diff = L1Diff(PSRS, PSO) / (N * N);
 
   std::cout << "Difference: " << diff << std::endl;
+
+  int dimension = PSRS.dim();
+  assert(dimension == PSO.dim());
+  //for (int j = 0; j < dimension; ++j) {
+  int j = 2;
+  for (int k = 0; k < dimension; ++k) {
+    if (k == 8 || k == 21 || k == 28 || k == 33) {
+      for (int i = 0; i < dimension; ++i) {
+	std::cout << PSRS(i, j, k) << " "
+		  << PSO(i, j, k) << " "
+		  << i << " "
+		  << j << " "
+		  << k << std::endl;
+      }
+    }
+  }
 }
