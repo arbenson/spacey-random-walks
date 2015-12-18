@@ -1,7 +1,7 @@
 CXX = g++
 
-OPT := -O3
-CFLAGS := $(OPT) $(DEBUG) $(INCLUDES) $(DEFINES) -std=c++11 $(DEFINES)
+OPT := -O3 -std=c++11
+CFLAGS := $(OPT) $(DEBUG) $(INCLUDES) $(DEFINES) $(DEFINES)
 
 SRC = common_srs.cpp
 

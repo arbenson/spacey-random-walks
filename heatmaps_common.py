@@ -18,7 +18,6 @@ def GetBBox(polys, nbrhoods):
     gymax = None
     
     for poly, nbrhood in zip(polys, nbrhoods):
-        if nbrhood in ['Ellis Island', 'Liberty Island', 'OTHER']: continue
         coords = poly['coordinates'][0]
         cxmin = min([xy[0] for xy in coords])
         cymin = min([xy[1] for xy in coords])
@@ -49,15 +48,12 @@ def ReadKeys(key_file):
         nk['OTHER'] = 0
         return nk
 
-def AlphaMap(seqs, nbrhood_keys, logscale=False):
+def AlphaMap(seqs, nbrhood_keys):
     max_ind = np.max(np.max(seqs))
     vec = np.zeros(max_ind + 1)
     for seq in seqs:
         for loc in seq:
             vec[loc] += 1
     vec /= np.sum(vec)
-    if logscale:
-        vec = -np.log(vec)
-        vec /= np.sum(vec)
     return {key:vec[val] for key, val in nbrhood_keys.items()}
 

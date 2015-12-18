@@ -33,7 +33,7 @@ int MaximumIndex(const std::vector< std::vector<int> >& seqs) {
 
 std::vector<double> SimplexProjection(const std::vector<double>& vec) {
   std::vector<double> mu = vec;
-  std::sort(mu.begin(), mu.end(), std::greater<int>());
+  std::sort(mu.begin(), mu.end(), std::greater<double>());
   // Get cumulative sum
   double csum = 0.0;
   int rho = 0;

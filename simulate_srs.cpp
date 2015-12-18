@@ -152,26 +152,31 @@ double LogLikelihood(const Tensor3& P, const std::vector< std::vector<int> >& se
   return ll;
 }
 
-// Form uniform random transition probability tensor.
+// Form random transition probability tensor.  Each column is selected uniformly
+// at random from the simplex.
 Tensor3 RandomTPT(int dimension) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_real_distribution<> dis(0, 1);
   Tensor3 P(dimension);
-  for (int i = 0; i < dimension; ++i) {
-    for (int j = 0; j < dimension; ++j) {
-      for (int k = 0; k < dimension; ++k) {
-        // Random uniform value
-        P(i, j, k) = dis(gen);
+  for (int j = 0; j < dimension; ++j) {
+    for (int k = 0; k < dimension; ++k) {
+      std::vector<double> samples = {0.0, 1.0};
+      // Generate dimension - 1 uniform [0, 1] random variables
+      for (int l = 0; l < dimension - 1; ++l) {
+	samples.push_back(dis(gen));
+      }
+      std::sort(samples.begin(), samples.end());
+      for (int i = 0; i < dimension; ++i) {
+	P(i, j, k) = samples[i + 1] - samples[i];
       }
     }
   }
-  NormalizeStochastic(P);
   return P;
 }
 
 Tensor3 SRSGradientUpdate(const Tensor3& X, double step_size,
-                          const Tensor3& gradient) {
+			  const Tensor3& gradient) {
   int dim = X.dim();
   Tensor3 Y(dim);
   for (int i = 0; i < dim; ++i) {
@@ -187,13 +192,7 @@ Tensor3 SRSGradientUpdate(const Tensor3& X, double step_size,
 
 Tensor3 EstimateSRS(const std::vector< std::vector<int> >& seqs) {
   int dim = MaximumIndex(seqs) + 1;
-#if 0
-  Tensor3 X(dim);
-  X.SetGlobalValue(1.0);
-  NormalizeStochastic(X);
-#else
   Tensor3 X = EmpiricalSecondOrder(seqs);
-#endif
   double curr_ll = LogLikelihood(X, seqs);
 
   int niter = 20000;
@@ -270,33 +269,32 @@ void HandleOptions(int argc, char **argv) {
   int c;
 
   while (1) {
-      int option_index = 0;
-      c = getopt_long (argc, argv, "d:n:s:",
-                       long_options, &option_index);
-      /* Detect the end of the options. */
-      if (c == -1) {
-        break;
-      }
+    int option_index = 0;
+    c = getopt_long (argc, argv, "d:n:s:",
+		     long_options, &option_index);
+    // Detect the end of the options.
+    if (c == -1) {
+      break;
+    }
 
-      switch (c) {
-        case 0:
-          /* If this option set a flag, do nothing else now. */
-          if (long_options[option_index].flag != 0)
-            break;
-        case 'd':
-	  problem_dimension = atoi(optarg);
-          break;
-        case 'n':
-	  number_of_simulated_sequences = atoi(optarg);
-          break;
-        case 's':
-	  size_of_simulated_sequence = atoi(optarg);
-          break;
-        default:
-          abort();
-      }
+    switch (c) {
+    case 0:
+      // If this option set a flag, do nothing else now.
+      if (long_options[option_index].flag != 0)
+	break;
+    case 'd':
+      problem_dimension = atoi(optarg);
+      break;
+    case 'n':
+      number_of_simulated_sequences = atoi(optarg);
+      break;
+    case 's':
+      size_of_simulated_sequence = atoi(optarg);
+      break;
+    default:
+      abort();
+    }
   }
-
 }
 
 
