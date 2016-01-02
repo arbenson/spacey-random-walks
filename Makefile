@@ -3,7 +3,7 @@ CXX = g++
 OPT := -O3 -std=c++11
 CFLAGS := $(OPT) $(DEBUG) $(INCLUDES) $(DEFINES) $(DEFINES)
 
-SRC = common_srs.cpp
+SRC = common_srw.cpp
 
 OBJECTS = $(SRC:.cpp=.o)
 
@@ -12,14 +12,18 @@ default : all
 
 .PHONY : all
 
-simulate: simulate_srs.cpp $(OBJECTS)
+sim: simulate_srw.cpp $(OBJECTS)
 	$(CXX) $(CFLAGS) $< $(LDFLAGS) $(SNAP_OBJ) $(OBJECTS) $(LDLIBS) -o $@
 
-learn: learn_srs.cpp $(OBJECTS)
+learn_real: learn_real.cpp $(OBJECTS)
 	$(CXX) $(CFLAGS) $< $(LDFLAGS) $(SNAP_OBJ) $(OBJECTS) $(LDLIBS) -o $@
 
-SCRIPTS = simulate \
-          learn
+learn_synthetic: learn_synthetic.cpp $(OBJECTS)
+	$(CXX) $(CFLAGS) $< $(LDFLAGS) $(SNAP_OBJ) $(OBJECTS) $(LDLIBS) -o $@
+
+SCRIPTS = sim \
+          learn_real \
+          learn_synthetic
 
 all: $(SCRIPTS)
 

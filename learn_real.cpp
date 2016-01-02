@@ -8,11 +8,11 @@
 
 #include "math.h"
 
-#include "common_srs.hpp"
+#include "common_srw.hpp"
 #include "tensor3.hpp"
 
-static double fraction_init = 0.6;
-static double fraction_train = 0.1;
+static double fraction_init = 0.5;
+static double fraction_train = 0.4;
 
 int StartingIndex(const std::vector<int>& seq) {
   return floor((fraction_init) * seq.size());
@@ -130,22 +130,6 @@ double SpaceyRMSE(const std::vector< std::vector<int> >& seqs,
   return sqrt(err / num);
 }
 
-void ReadSequences(std::string filename,
-                   std::vector< std::vector<int> >& seqs) {
-  std::string line;
-  std::ifstream infile(filename);
-  while (std::getline(infile, line)) {
-    int loc;
-    char delim;
-    std::vector<int> seq;
-    std::istringstream iss(line);
-    while (iss >> loc) {
-      seq.push_back(loc);
-      iss >> delim;
-    }
-    seqs.push_back(seq);
-  }
-}
 
 Tensor3 UpdateAndProject(const Tensor3& X, const Tensor3& G, double step_size) {
   int N = X.dim();
@@ -190,7 +174,7 @@ Tensor3 EmpiricalSecondOrder(const std::vector< std::vector<int> >& seqs) {
   return X;
 }
 
-Tensor3 EstimateSRS(const std::vector< std::vector<int> >& seqs) {
+Tensor3 EstimateSRW(const std::vector< std::vector<int> >& seqs) {
 #if 1
   Tensor3 X = EmpiricalSecondOrder(seqs);
 #else
@@ -203,13 +187,13 @@ Tensor3 EstimateSRS(const std::vector< std::vector<int> >& seqs) {
   std::cerr << "Starting log likelihood: " << curr_ll << std::endl;
   std::cerr << "Generalization RMSE: " << generalization_error << std::endl;
 #if 0
-  double srs_pak1 = SpaceyPrecisionAtK(seqs, X, 1);
-  double srs_pak3 = SpaceyPrecisionAtK(seqs, X, 3);
-  double srs_pak5 = SpaceyPrecisionAtK(seqs, X, 5);
+  double srw_pak1 = SpaceyPrecisionAtK(seqs, X, 1);
+  double srw_pak3 = SpaceyPrecisionAtK(seqs, X, 3);
+  double srw_pak5 = SpaceyPrecisionAtK(seqs, X, 5);
   std::cerr << "Precisions@{1,3,5}: " 
-            << srs_pak1 << " "
-            << srs_pak3 << " "
-            << srs_pak5 << std::endl;
+            << srw_pak1 << " "
+            << srw_pak3 << " "
+            << srw_pak5 << std::endl;
 #endif
 
   int niter = 5000;
@@ -227,13 +211,13 @@ Tensor3 EstimateSRS(const std::vector< std::vector<int> >& seqs) {
       std::cerr << update_ll << " " << step_size
                 << " (" << gen_rmse << ")" << std::endl;
 #if 0
-      srs_pak1 = SpaceyPrecisionAtK(seqs, Y, 1);
-      srs_pak3 = SpaceyPrecisionAtK(seqs, Y, 3);
-      srs_pak5 = SpaceyPrecisionAtK(seqs, Y, 5);
+      srw_pak1 = SpaceyPrecisionAtK(seqs, Y, 1);
+      srw_pak3 = SpaceyPrecisionAtK(seqs, Y, 3);
+      srw_pak5 = SpaceyPrecisionAtK(seqs, Y, 5);
       std::cerr << "Precisions@{1,3,5}: "
-                << srs_pak1 << " "
-                << srs_pak3 << " "
-                << srs_pak5 << std::endl;
+                << srw_pak1 << " "
+                << srw_pak3 << " "
+                << srw_pak5 << std::endl;
 #endif
     } else {
       starting_step_size *= 0.5;
@@ -339,8 +323,11 @@ double FirstOrderRMSE(Matrix2& P, std::vector< std::vector<int> >& seqs) {
   int num = 0;
   for (auto& seq : seqs) {
     for (int l = EndingIndex(seq); l < seq.size(); ++l) {
+      assert(l > 0);
       int j = seq[l - 1];
       int i = seq[l];
+      assert(i < P.dim());
+      assert(j < P.dim());
       double val = (1 - P(i, j));
       err += val * val;
       ++num;
@@ -513,23 +500,23 @@ int main(int argc, char **argv) {
             << fo_pak3 << " "
             << fo_pak5 << std::endl;
 
-  Tensor3 PSRS = EstimateSRS(seqs);
-  int N = PSRS.dim();
-  double diff = L1Diff(PSRS, PSO) / (N * N);
+  Tensor3 PSRW = EstimateSRW(seqs);
+  int N = PSRW.dim();
+  double diff = L1Diff(PSRW, PSO) / (N * N);
 
   std::cerr << "Difference: " << diff << std::endl;
 
 #if 0
-  PerPlaceSpaceyErrors(PSRS, seqs);  
+  PerPlaceSpaceyErrors(PSRW, seqs);  
   PerPlaceSecondOrderErrors(PSO, seqs);
 
-  int dimension = PSRS.dim();
+  int dimension = PSRW.dim();
   assert(dimension == PSO.dim());
   //for (int j = 0; j < dimension; ++j) {
   int j = 2;
   for (int k = 0; k < dimension; ++k) {
     for (int i = 0; i < dimension; ++i) {
-      std::cout << PSRS(i, j, k) << " "
+      std::cout << PSRW(i, j, k) << " "
                 << PSO(i, j, k) << " "
                 << i << " "
                 << j << " "

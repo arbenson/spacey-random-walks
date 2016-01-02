@@ -1,8 +1,10 @@
-#include "common_srs.hpp"
+#include "common_srw.hpp"
 
 #include <cassert>
 #include <iostream>
+#include <fstream>
 #include <random>
+#include <sstream>
 #include <vector>
 
 #include "tensor3.hpp"
@@ -126,4 +128,113 @@ double L1Diff(const std::vector<double>& v1, const std::vector<double>& v2) {
     diff += std::abs(v1[i] - v2[i]);
   }
   return diff;
+}
+
+std::vector<double> TensorApply(const Tensor3& P, const std::vector<double>& x) {
+  std::vector<double> y(x.size(), 0.0);
+  int dim = P.dim();
+  for (int i = 0; i < dim; ++i) {
+    for (int j = 0; j < dim; ++j) {
+      for (int k = 0; k < dim; ++k) {
+        // P(i, j, k) is column (j, k) and row (i, j)
+        y[i] += P.Get(i, j, k) * x[j] * x[k];
+      }
+    }
+  }
+  return y;
+}
+
+std::vector<double> Apply(const Tensor3& P, const std::vector<double>& x) {
+  std::vector<double> y(x.size(), 0.0);
+  int dim = P.dim();
+  for (int i = 0; i < dim; ++i) {
+    for (int j = 0; j < dim; ++j) {
+      for (int k = 0; k < dim; ++k) {
+        // P(i, j, k) is column (j, k) and row (i, j)
+        y[i * dim + j] += P(i, j, k) * x[j * dim + k];
+      }
+    }
+  }
+  return y;
+}
+
+
+std::vector<double> Stationary(const Tensor3& P) {
+  int dim = P.dim();
+  std::vector<double> x(dim * dim, 1.0 / (dim * dim));
+  int max_iter = 1000;
+  double tol = 1e-12;
+  for (int iter = 0; iter < max_iter; ++iter) {
+    std::vector<double> x_next = Apply(P, x);
+    // Check the difference
+    double diff = L1Diff(x_next, x);
+    x = x_next;
+    x = Normalized(x);
+    // Stop if difference is small enough
+    if (diff < tol) { break; }
+  }
+  return x;
+}
+
+std::vector<double> StationaryMarginals(const Tensor3& P) {
+  std::vector<double> st = Stationary(P);
+  int dim = P.dim();
+  std::vector<double> marginals(dim, 0.0);
+  for (int i = 0; i < st.size(); ++i) {
+    int marginal_ind = (i % dim);
+    marginals[marginal_ind] += st[i];
+  }
+  return marginals;
+}
+
+std::vector<double> SpaceyStationary(const Tensor3& P, int max_iter=1000,
+				     double gamma=0.01, double tol=1e-12) {
+  int dim = P.dim();
+  std::vector<double> x(dim, 1.0 / dim);
+  for (int iter = 0; iter < max_iter; ++iter) {
+    std::vector<double> x_next = TensorApply(P, x);
+    // Check the difference
+    double diff = L1Diff(x_next, x);
+    for (int j = 0; j < x.size(); ++j) {
+      x[j] = (1.0 - gamma) * x_next[j] + gamma * x[j];
+    }
+    x = Normalized(x);
+    // Stop if difference is small enough
+    if (diff < tol) { break; }
+  }
+  return x;
+}
+
+void ReadSequences(std::string filename,
+                   std::vector< std::vector<int> >& seqs) {
+  std::string line;
+  std::ifstream infile(filename);
+  while (std::getline(infile, line)) {
+    int loc;
+    char delim;
+    std::vector<int> seq;
+    std::istringstream iss(line);
+    while (iss >> loc) {
+      seq.push_back(loc);
+      iss >> delim;
+    }
+    seqs.push_back(seq);
+  }
+}
+
+void WriteTensor(const Tensor3& P, const std::string& outfile) {
+  std::ofstream out;
+  out.open(outfile);
+  int dim = P.dim();
+  for (int i = 0; i < dim; ++i) {
+    for (int j = 0; j < dim; ++j) {
+      for (int k = 0; k < dim; ++k) {
+	out << i << " "
+	    << j << " "
+	    << k << " "
+	    << P(i, j, k) << std::endl;
+      }
+    }
+  }
+  out.close();
 }
