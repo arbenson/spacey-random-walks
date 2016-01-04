@@ -19,7 +19,7 @@ static std::string tensor_output_file = "P.out";
 
 // Form random transition probability tensor.  Each column is selected uniformly
 // at random from the simplex.
-Tensor3 RandomTPT(int dimension) {
+Tensor3 UniformRandomTPT(int dimension) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_real_distribution<> dis(0, 1);
@@ -37,6 +37,23 @@ Tensor3 RandomTPT(int dimension) {
       }
     }
   }
+  return P;
+}
+
+// Form random transition probability tensor.
+Tensor3 LogNormalRandomTPT(int dimension) {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::lognormal_distribution<double> dis(0.0,1.0);
+  Tensor3 P(dimension);
+  for (int i = 0; i < dimension; ++i) {
+    for (int j = 0; j < dimension; ++j) {
+      for (int k = 0; k < dimension; ++k) {
+	P(i, j, k) = dis(gen);
+      }
+    }
+  }
+  NormalizeStochastic(P);
   return P;
 }
 
@@ -133,7 +150,7 @@ int main(int argc, char **argv) {
   HandleOptions(argc, argv);
 
   std::vector< std::vector<int> > seqs;
-  Tensor3 P = RandomTPT(problem_dimension);
+  Tensor3 P = UniformRandomTPT(problem_dimension);
   Simulate(P, seqs, number_of_simulated_sequences, size_of_simulated_sequence);
 
   WriteTensor(P, tensor_output_file);

@@ -29,6 +29,31 @@ Tensor3 EmpiricalSecondOrder(const std::vector< std::vector<int> >& seqs) {
   return X;
 }
 
+Matrix2 EmpiricalFirstOrder(const std::vector< std::vector<int> >& seqs) {
+  // Fill in empirical transitions
+  int dim = MaximumIndex(seqs) + 1;
+  Matrix2 X(dim);
+  X.SetGlobalValue(0);
+  for (auto& seq : seqs) {
+    for (int l = 0; l < seq.size(); ++l) {
+      int j = 0;  // Starts at zero by default
+      if (l > 0) {
+	j = seq[l - 1];
+      }
+      int i = seq[l];
+      X(i, j) = X.Get(i, j) + 1;
+    }
+  }
+
+  // Normalize to stochastic
+  for (int j = 0; j < dim; ++j) {
+    std::vector<double> col = X.GetColumn(j);
+    std::vector<double> ncol = Normalized(col);
+    X.SetColumn(j, ncol);
+  }
+  return X;
+}
+
 Tensor3 Gradient(const std::vector< std::vector<int> >& seqs,
                  const Tensor3& P) {
   Tensor3 G(P.dim());
@@ -215,21 +240,40 @@ double SecondOrderRMSE(const std::vector< std::vector<int> >& seqs,
   return sqrt(err / num);
 }
 
+double FirstOrderRMSE(const std::vector< std::vector<int> >& seqs,
+		      const Matrix2& P) {
+  double err = 0.0;
+  int num = 0;
+  for (auto& seq : seqs) {
+    for (int l = 1; l < seq.size(); ++l) {
+      int i = seq[l];
+      int j = seq[l - 1];
+      double val = 1 - P(i, j);
+      err += val * val;
+      ++num;
+    }
+  }
+  return sqrt(err / num);
+}
+
 int main(int argc, char **argv) {
   std::vector< std::vector<int> > train_seqs, test_seqs;
+  ReadSequences(argv[1], train_seqs);
+  ReadSequences(argv[2], test_seqs);
+  Tensor3 P = ReadTensor(argv[3]);
+
 #if 0
-  ReadSequences("processed_data/synthetic/seqs-5-50-1250-train.1.txt", train_seqs);
-  ReadSequences("processed_data/synthetic/seqs-5-50-1250-test.1.txt", test_seqs);
-  Tensor3 P = ReadTensor("processed_data/synthetic/P-5-50-1250.1.txt");
+  std::vector< std::vector<int> > train_seqs2;
+  train_seqs2.push_back(train_seqs[0]);
 #endif
-  ReadSequences("processed_data/synthetic/seqs-2-20-32-train.5.txt", train_seqs);
-  ReadSequences("processed_data/synthetic/seqs-2-20-32-test.5.txt", test_seqs);
-  Tensor3 P = ReadTensor("processed_data/synthetic/P-2-20-32.5.txt");
-
   Tensor3 PSO = EmpiricalSecondOrder(train_seqs);
+  Matrix2 PFO = EmpiricalFirstOrder(train_seqs);
 
-  double err1 = SpaceyRMSE(train_seqs, P);
-  double err2 = SecondOrderRMSE(train_seqs, PSO);
+  double err1 = SpaceyRMSE(test_seqs, P);
+  double err2 = SecondOrderRMSE(test_seqs, PSO);
+  double err3 = FirstOrderRMSE(test_seqs, PFO);
 
-  std::cout << err1 << " " << err2 << std::endl;
+  std::cout << "Spacey:       " << err1 << std::endl
+	    << "Second-order: " << err2 << std::endl
+	    << "First-order:  " << err3 << std::endl;
 }
