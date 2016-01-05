@@ -130,7 +130,6 @@ double SpaceyRMSE(const std::vector< std::vector<int> >& seqs,
   return sqrt(err / num);
 }
 
-
 Tensor3 UpdateAndProject(const Tensor3& X, const Tensor3& G, double step_size) {
   int N = X.dim();
   Tensor3 Y(N);

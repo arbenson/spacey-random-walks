@@ -57,17 +57,85 @@ Tensor3 LogNormalRandomTPT(int dimension) {
   return P;
 }
 
+Tensor3 R_4_1() {
+  Tensor3 X(4);
+  X.SetGlobalValue(0.0);
+  
+  // First panel
+  X(3, 0, 0) = 1;
+  X(3, 1, 0) = 1;
+  X(3, 2, 0) = 1;
+  X(3, 3, 0) = 1;
+
+  // Second panel
+  X(3, 0, 1) = 1;
+  X(1, 1, 1) = 1;
+  X(2, 2, 1) = 1;
+  X(1, 3, 1) = 1;
+
+  // Third panel
+  X(3, 0, 2) = 1;
+  X(1, 1, 2) = 1;
+  X(2, 1, 2) = 1;
+  X(2, 2, 2) = 1;
+  X(3, 3, 2) = 1;
+
+  // Fourth panel
+  X(0, 0, 3) = 1;
+  X(3, 0, 3) = 1;
+  X(1, 1, 3) = 1;
+  X(3, 2, 3) = 1;
+  X(0, 3, 3) = 1;
+
+  NormalizeStochastic(X);
+  return X;
+}
+
+Tensor3 R_4_9() {
+  Tensor3 X(4);
+  X.SetGlobalValue(0.0);
+  
+  // First panel
+  X(3, 0, 0) = 1;
+  X(3, 1, 0) = 1;
+  X(3, 2, 0) = 1;
+  X(3, 3, 0) = 1;
+
+  // Second panel
+  X(3, 0, 1) = 1;
+  X(1, 1, 1) = 1;
+  X(2, 2, 1) = 1;
+  X(1, 3, 1) = 1;
+
+  // Third panel
+  X(3, 0, 2) = 1;
+  X(1, 1, 2) = 1;
+  X(2, 1, 2) = 1;
+  X(2, 2, 2) = 1;
+  X(0, 3, 2) = 1;
+
+  // Fourth panel
+  X(0, 0, 3) = 1;
+  X(1, 1, 3) = 1;
+  X(0, 2, 3) = 1;
+  X(3, 3, 3) = 1;
+
+  NormalizeStochastic(X);
+  return X;
+}
+
 void Simulate(const Tensor3& P, std::vector< std::vector<int> >& seqs,
               int num_seqs, int num_samples) {
   int dim = P.dim();
   seqs.clear();
   for (int seq_ind = 0; seq_ind < num_seqs; ++seq_ind) {
     std::vector<int> history(dim, 1);
-    int j = 0;
+    std::vector<double> occupancy = Normalized(history);
+    int j = 0;  // Starts at zero by default
     std::vector<int> seq(num_samples);
     for (int sample_ind = 0; sample_ind < num_samples; ++sample_ind) {
       // Choose from history
-      std::vector<double> occupancy = Normalized(history);
+      occupancy = Normalized(history);
       int k = Choice(occupancy);
 
       // Follow transition
@@ -107,8 +175,9 @@ void HandleOptions(int argc, char **argv) {
     switch (c) {
     case 0:
       // If this option set a flag, do nothing else now.
-      if (long_options[option_index].flag != 0)
+      if (long_options[option_index].flag != 0) {
 	break;
+      }
     case 'd':
       problem_dimension = atoi(optarg);
       break;
@@ -146,13 +215,27 @@ void WriteSequences(const std::vector< std::vector<int> >& seqs,
   out.close();
 }
 
+void Simulate_R_4_1() {
+  std::vector< std::vector<int> > seqs;
+  Tensor3 P = R_4_1();
+  Simulate(P, seqs, number_of_simulated_sequences, size_of_simulated_sequence);
+  WriteTensor(P, tensor_output_file);
+  WriteSequences(seqs, sequence_output_file);
+}
+
+void Simulate_R_4_9() {
+  std::vector< std::vector<int> > seqs;
+  Tensor3 P = R_4_9();
+  Simulate(P, seqs, number_of_simulated_sequences, size_of_simulated_sequence);
+  WriteTensor(P, tensor_output_file);
+  WriteSequences(seqs, sequence_output_file);
+}
+
 int main(int argc, char **argv) {
   HandleOptions(argc, argv);
-
-  std::vector< std::vector<int> > seqs;
   Tensor3 P = UniformRandomTPT(problem_dimension);
+  std::vector< std::vector<int> > seqs;
   Simulate(P, seqs, number_of_simulated_sequences, size_of_simulated_sequence);
-
   WriteTensor(P, tensor_output_file);
   WriteSequences(seqs, sequence_output_file);
 }
