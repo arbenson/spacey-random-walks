@@ -4,10 +4,13 @@
 
 dir=processed_data/taxi
 
-./learn_synthetic \
-    $dir/manhattan-year-train.txt \
-    $dir/manhattan-year-test.txt \
-    $dir/P \
-    $dir/manhattan-year-learned.txt \
+./learn \
+    -n 200 \
+    -s 3.125e-08 \
+    -r 0.5 \
+    -m 1e-16 \
+    -u 5 \
+    -t $dir/manhattan-year-train.txt \
+    -e $dir/manhattan-year-test.txt \
+    -o $dir/manhattan-year-learned.txt \
     > $dir/manhattan-year-results.txt
-

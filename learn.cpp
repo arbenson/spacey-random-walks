@@ -5,13 +5,20 @@
 #include <string>
 #include <vector>
 
+#include <getopt.h>
+
 #include "common_srw.hpp"
 #include "tensor3.hpp"
 
-static const int max_iter = 200;
-static const double starting_step_size = 3.125e-08;
-static const double step_size_reduction = 0.5;
-static const double minimum_step_size = 1e-16;
+static int max_iter = 1000;
+static double starting_step_size = 1;
+static double step_size_reduction = 0.5;
+static double minimum_step_size = 1e-16;
+static int update_frequency = 1000;
+static std::string train_file = "";
+static std::string test_file = "";
+static std::string tensor_input_file = "";
+static std::string tensor_output_file = "P.txt";
 
 Tensor3 EmpiricalSecondOrder(const std::vector< std::vector<int> >& seqs) {
   int dim = MaximumIndex(seqs) + 1;
@@ -134,13 +141,9 @@ Tensor3 EstimateSRW(const std::vector< std::vector<int> >& seqs) {
     if (next_ll > curr_ll) {
       X = Y;
       curr_ll = next_ll;
-#if 0
-      if (iter % 1000 == 0) {
+      if (iter % update_frequency == 0) {
 	std::cerr << curr_ll << " " << iter << " " << step_size << std::endl;
       }
-#else
-      std::cerr << curr_ll << " " << iter << " " << step_size << std::endl;
-#endif
     } else {
       // decrease step size
       step_size *= step_size_reduction;
@@ -254,41 +257,117 @@ double FirstOrderRMSE(const std::vector< std::vector<int> >& seqs,
   return sqrt(err / num);
 }
 
+void HandleOptions(int argc, char **argv) {
+  static struct option long_options[] =
+    {
+      {"max_iter",            required_argument, 0, 'n'},
+      {"starting_step_size",  required_argument, 0, 's'},
+      {"step_size_reduction", required_argument, 0, 'r'},
+      {"minimum_step_size",   required_argument, 0, 'm'},
+      {"train_file",          required_argument, 0, 't'},
+      {"test_file",           required_argument, 0, 'e'},
+      {"tensor_input_file",   required_argument, 0, 'p'},
+      {"tensor_output_file",  required_argument, 0, 'o'},
+      {"update_frequency",    required_argument, 0, 'u'},
+      {0, 0, 0, 0}
+    };
+
+  int c;
+  while (1) {
+    int option_index = 0;
+    c = getopt_long (argc, argv, "n:s:r:m:t:p:e:o:u:",
+		     long_options, &option_index);
+    // Detect the end of the options.
+    if (c == -1) {
+      break;
+    }
+
+    switch (c) {
+    case 0:
+      // If this option set a flag, do nothing else now.
+      if (long_options[option_index].flag != 0) {
+	break;
+      }
+    case 'n':
+      max_iter = atoi(optarg);
+      break;
+    case 's':
+      starting_step_size = atof(optarg);
+      break;
+    case 'r':
+      step_size_reduction = atof(optarg);
+      break;
+    case 'm':
+      minimum_step_size = atof(optarg);
+    case 't':
+      train_file = std::string(optarg);
+      break;
+    case 'e':
+      test_file = std::string(optarg);
+      break;
+    case 'p':
+      tensor_input_file = std::string(optarg);
+      break;
+    case 'o':
+      tensor_output_file = std::string(optarg);
+      break;
+    case 'u':
+      update_frequency = atoi(optarg);
+      break;
+    default:
+      abort();
+    }
+  }
+}
+
 int main(int argc, char **argv) {
+  HandleOptions(argc, argv);
+  if (train_file.size() == 0) {
+    std::cerr << "Must provide training data (-t)." << std::endl;
+    abort();
+  }
+  if (test_file.size() == 0) {
+    std::cerr << "Must provide test data (-e)." << std::endl;
+    abort();
+  }
   std::vector< std::vector<int> > train_seqs, test_seqs;
-  ReadSequences(argv[1], train_seqs);
-  ReadSequences(argv[2], test_seqs);
-#if 0
-  Tensor3 P = ReadTensor(argv[3]);
-#endif
+  ReadSequences(train_file, train_seqs);
+  ReadSequences(test_file, test_seqs);
+  Tensor3 P;
+  if (tensor_input_file.size() > 0) {
+    P = ReadTensor(tensor_input_file);
+  }
 
   Tensor3 PSO  = EmpiricalSecondOrder(train_seqs);
   Matrix2 PFO  = EmpiricalFirstOrder(train_seqs);
   Tensor3 PSRW = EstimateSRW(train_seqs);
 
-#if 0
-  double err1 = SpaceyRMSE(test_seqs, P);
-#endif
+  double err1 = 0;
+  if (tensor_input_file.size() > 0) {
+    err1 = SpaceyRMSE(test_seqs, P);
+  }
   double err2 = SpaceyRMSE(test_seqs, PSRW);
   double err3 = SpaceyRMSE(test_seqs, PSO);
   double err4 = SecondOrderRMSE(test_seqs, PSO);
   double err5 = FirstOrderRMSE(test_seqs, PFO);
 
-#if 0
-  std::cout << "Spacey (true):      " << err1 << std::endl;
-#endif
+  // RMSEs on the test data
+  if (tensor_input_file.size() > 0) {
+    std::cout << "Spacey (true):      " << err1 << std::endl;
+  }
   std::cout << "Spacey (estimated): " << err2 << std::endl;
   std::cout << "Spacey (empirical): " << err3 << std::endl;
   std::cout << "Second-order:       " << err4 << std::endl;
   std::cout << "First-order:        " << err5 << std::endl;
 
-#if 0
-  int N = P.dim();
-  double diff1 = L1Diff(PSRW, P) / (N * N);
-  double diff2 = L1Diff(PSO,  P) / (N * N);
-  std::cout << "|| PSRW - P ||_1 / N^2: " << diff1 << std::endl;
-  std::cout << "|| PSO - P ||_1 / N^2 : " << diff2 << std::endl;
-#endif
+  // Error in parameter recovery
+  if (tensor_input_file.size() > 0) {
+    int N = P.dim();
+    double diff1 = L1Diff(PSRW, P) / (N * N);
+    double diff2 = L1Diff(PSO,  P) / (N * N);
+    std::cout << "|| PSRW - P ||_1 / N^2: " << diff1 << std::endl;
+    std::cout << "|| PSO - P ||_1 / N^2 : " << diff2 << std::endl;
+  }
 
-  WriteTensor(PSRW, argv[4]);  
+  WriteTensor(PSRW, tensor_output_file);  
 }
