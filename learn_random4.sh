@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Learn the spacey random walk model for the synthetically generated
-# trajectories.
+# trajectories from the random transition probability tensors.
 
 dir=processed_data/synthetic_experiments/uniform
 
