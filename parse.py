@@ -6,90 +6,39 @@ def parse_file(filename):
 
     with open(filename) as f:
         for line in f:
-            if line.find('Oracle LL:') != -1:
-                oracle_ll = last_float(line)
-            elif line.find('Empirical LL:') != -1:
-                empirical_ll = last_float(line)
-            elif line.find('SRW LL:') != -1:
-                srw_ll = last_float(line)
-            elif line.find('Second-order LL:') != -1:
-                so_ll = last_float(line)
-            elif line.find('|| vec(P) - vec(PSO) ||_1') != -1:
-                diff_so = last_float(line)
-            elif line.find('|| vec(P) - vec(PSRW) ||_1') != -1:
-                diff_srw = last_float(line)
+            if line.find('Spacey (true):') != -1:
+                true_rmse = last_float(line)
+            elif line.find('Spacey (estimated):') != -1:
+                srw_rmse = last_float(line)
+            elif line.find('Second-order:') != -1:
+                somc_rmse = last_float(line)
+            elif line.find('First-order:') != -1:
+                fomc_rmse = last_float(line)
 
-        return oracle_ll, empirical_ll, srw_ll, so_ll, diff_so, diff_srw
 
-def collect(dimension, nseq, seq_len, nsim):
-    all_oracle_ll = []
-    all_empirical_ll = []
-    all_srw_ll = []
-    all_so_ll = []
-    all_diff_so = []
-    all_diff_srw = []
+        return true_rmse, srw_rmse, somc_rmse, fomc_rmse
+
+def collect(nsim):
+    all_true_rmse = []
+    all_srw_rmse = []
+    all_somc_rmse = []
+    all_fomc_rmse = []
     for k in xrange(1, nsim + 1):
-        (oracle_ll, empirical_ll, srw_ll,
-         so_ll, diff_so, diff_srw) = parse_file('results/sim-%d-%d-%d.%d' % (
-                dimension, nseq, seq_len, k))
-        all_oracle_ll.append(oracle_ll)
-        all_empirical_ll.append(empirical_ll)
-        all_srw_ll.append(srw_ll)
-        all_so_ll.append(so_ll)
-        all_diff_so.append(diff_so)
-        all_diff_srw.append(diff_srw)
+        file = 'processed_data/synthetic/uniform/P-4-100-200-data.%d.txt' % k
+        true_rmse, srw_rmse, somc_rmse, fomc_rmse = parse_file(file)
+        all_true_rmse.append(true_rmse)
+        all_srw_rmse.append(srw_rmse)
+        all_somc_rmse.append(somc_rmse)
+        all_fomc_rmse.append(fomc_rmse)
 
-    def ll_ratios(ll1, ll2):
-        num_samp = nseq * (seq_len - 1)
-        z = np.array(ll1) - np.array(ll2)
-        return np.exp(z / num_samp) - 1
 
-    
-    return (ll_ratios(all_srw_ll, all_oracle_ll), ll_ratios(all_empirical_ll, all_oracle_ll),
-            ll_ratios(all_so_ll, all_oracle_ll), all_diff_so, all_diff_srw)
+    return all_true_rmse, all_srw_rmse, all_somc_rmse, all_fomc_rmse
 
 if __name__ == '__main__':
-    srw_ratios, emp_ratios, so_ratios, all_diff_so, all_diff_srw = collect(2, 20, 80, 20)
-    print '2 40 80'
-    print 'SRW diff', np.mean(all_diff_srw), np.std(all_diff_srw)
-    print 'Empirical diff', np.mean(all_diff_so), np.std(all_diff_so)
-    print 'SRW LL ratio', np.mean(srw_ratios), np.std(srw_ratios)
-    print 'Empirical LL ratio', np.mean(emp_ratios), np.std(emp_ratios)
-    print 'SO markov ratio', np.mean(so_ratios), np.std(so_ratios)
-    print '2 & %0.2f$\pm$%0.2f & %0.2f$\pm$%0.2f & %.1e$\pm$%.1e & %.1e$\pm$%.1e & %.1e$\pm$%.1e' % (
-        np.mean(all_diff_srw), np.std(all_diff_srw),
-        np.mean(all_diff_so), np.std(all_diff_so),
-        np.mean(srw_ratios), np.std(srw_ratios),
-        np.mean(emp_ratios), np.std(emp_ratios),
-        np.mean(so_ratios), np.std(so_ratios),
+    all_true_rmse, all_srw_rmse, all_somc_rmse, all_fomc_rmse = collect(20)
+    print ' & %0.3f$\pm$%0.3f & %0.3f$\pm$%0.3f & %0.3f$\pm$%0.3f & %0.3f$\pm$%0.3f' % (
+        np.mean(all_true_rmse), np.std(all_true_rmse),
+        np.mean(all_srw_rmse), np.std(all_srw_rmse),
+        np.mean(all_somc_rmse), np.std(all_somc_rmse),
+        np.mean(all_fomc_rmse), np.std(all_fomc_rmse)
         )
-
-    srw_ratios, emp_ratios, so_ratios, all_diff_so, all_diff_srw = collect(4, 40, 640, 20)
-    print '4 80 640'
-    print 'SRW diff', np.mean(all_diff_srw), np.std(all_diff_srw)
-    print 'Empirical diff', np.mean(all_diff_so), np.std(all_diff_so)
-    print 'SRW LL ratio', np.mean(srw_ratios), np.std(srw_ratios)
-    print 'Empirical LL ratio', np.mean(emp_ratios), np.std(emp_ratios)
-    print 'SO markov ratio', np.mean(so_ratios), np.std(so_ratios)
-    print '4 & %0.2f$\pm$%0.2f & %0.2f$\pm$%0.2f & %.1e$\pm$%.1e & %.1e$\pm$%.1e & %.1e$\pm$%.1e' % (
-        np.mean(all_diff_srw), np.std(all_diff_srw),
-        np.mean(all_diff_so), np.std(all_diff_so),
-        np.mean(srw_ratios), np.std(srw_ratios),
-        np.mean(emp_ratios), np.std(emp_ratios),
-        np.mean(so_ratios), np.std(so_ratios),
-        )
-
-    srw_ratios, emp_ratios, so_ratios, all_diff_so, all_diff_srw = collect(6, 60, 2160, 20)
-    print '6 60 2160'
-    print 'SRW diff', np.mean(all_diff_srw), np.std(all_diff_srw)
-    print 'Empirical diff', np.mean(all_diff_so), np.std(all_diff_so)
-    print 'SRW LL ratio', np.mean(srw_ratios), np.std(srw_ratios)
-    print 'Empirical LL ratio', np.mean(emp_ratios), np.std(emp_ratios)
-    print 'SO markov ratio', np.mean(so_ratios), np.std(so_ratios)
-    print '6 & %0.2f$\pm$%0.2f & %0.2f$\pm$%0.2f & %.1e$\pm$%.1e & %.1e$\pm$%.1e & %.1e$\pm$%.1e' % (
-        np.mean(all_diff_srw), np.std(all_diff_srw),
-        np.mean(all_diff_so), np.std(all_diff_so),
-        np.mean(srw_ratios), np.std(srw_ratios),
-        np.mean(emp_ratios), np.std(emp_ratios),
-        np.mean(so_ratios), np.std(so_ratios),
-        )    
