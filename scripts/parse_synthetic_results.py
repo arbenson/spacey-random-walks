@@ -1,5 +1,8 @@
 import numpy as np
 
+# This is just a simple script to parse the results from the synthetic
+# experiments.
+
 def parse_file(filename):
     def last_float(st):
         return float(st.split()[-1])

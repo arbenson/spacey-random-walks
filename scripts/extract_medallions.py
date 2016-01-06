@@ -1,6 +1,11 @@
 import csv
 import sys
 
+# Print all medallions from the raw trajectory data.
+#
+# USAGE:
+#    python extract_medallions.py ../data/trip_data_1.csv > medallions.txt
+
 if __name__ == '__main__':
     all_medallions = {}
     with open(sys.argv[1], 'rb') as csvfile:
