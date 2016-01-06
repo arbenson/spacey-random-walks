@@ -9,7 +9,6 @@
 #include "common_srw.hpp"
 #include "tensor3.hpp"
 
-static int verbose_flag = 0;
 static int simulate_R1 = 0;
 static int simulate_R2 = 0;
 static int simulate_random = 0;
@@ -157,7 +156,9 @@ void Simulate(const Tensor3& P, std::vector< std::vector<int> >& seqs,
 void HandleOptions(int argc, char **argv) {
   static struct option long_options[] =
     {
-      {"verbose",         no_argument, &verbose_flag, 1},
+      {"sim_R1",          no_argument, &simulate_R1, 1},
+      {"sim_R2",          no_argument, &simulate_R2, 1},
+      {"sim_rand",        no_argument, &simulate_random, 1},
       {"dimension",       required_argument, 0, 'd'},
       {"num_sequences",   required_argument, 0, 'n'},
       {"sequence",        required_argument, 0, 's'},
@@ -219,7 +220,7 @@ void WriteSequences(const std::vector< std::vector<int> >& seqs,
   out.close();
 }
 
-void Simulate_R1() {
+void SimulateR1() {
   std::vector< std::vector<int> > seqs;
   Tensor3 P = R1();
   Simulate(P, seqs, number_of_simulated_sequences, size_of_simulated_sequence);
@@ -227,7 +228,7 @@ void Simulate_R1() {
   WriteSequences(seqs, sequence_output_file);
 }
 
-void Simulate_R2() {
+void SimulateR2() {
   std::vector< std::vector<int> > seqs;
   Tensor3 P = R2();
   Simulate(P, seqs, number_of_simulated_sequences, size_of_simulated_sequence);
