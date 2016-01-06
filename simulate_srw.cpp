@@ -10,6 +10,9 @@
 #include "tensor3.hpp"
 
 static int verbose_flag = 0;
+static int simulate_R1 = 0;
+static int simulate_R2 = 0;
+static int simulate_random = 0;
 static int problem_dimension = 4;
 static int number_of_simulated_sequences = 25;
 static int size_of_simulated_sequence = 1000;
@@ -56,7 +59,8 @@ Tensor3 LogNormalRandomTPT(int dimension) {
   return P;
 }
 
-Tensor3 R_4_1() {
+// Transitions corresponding to R_{1} in multilinear pagerank paper.
+Tensor3 R1() {
   Tensor3 X(4);
   X.SetGlobalValue(0.0);
   
@@ -90,7 +94,8 @@ Tensor3 R_4_1() {
   return X;
 }
 
-Tensor3 R_4_9() {
+// Transitions corresponding to R_{4,9} in multilinear pagerank paper.
+Tensor3 R2() {
   Tensor3 X(4);
   X.SetGlobalValue(0.0);
   
@@ -214,17 +219,17 @@ void WriteSequences(const std::vector< std::vector<int> >& seqs,
   out.close();
 }
 
-void Simulate_R_4_1() {
+void Simulate_R1() {
   std::vector< std::vector<int> > seqs;
-  Tensor3 P = R_4_1();
+  Tensor3 P = R1();
   Simulate(P, seqs, number_of_simulated_sequences, size_of_simulated_sequence);
   WriteTensor(P, tensor_output_file);
   WriteSequences(seqs, sequence_output_file);
 }
 
-void Simulate_R_4_9() {
+void Simulate_R2() {
   std::vector< std::vector<int> > seqs;
-  Tensor3 P = R_4_9();
+  Tensor3 P = R2();
   Simulate(P, seqs, number_of_simulated_sequences, size_of_simulated_sequence);
   WriteTensor(P, tensor_output_file);
   WriteSequences(seqs, sequence_output_file);
@@ -232,9 +237,15 @@ void Simulate_R_4_9() {
 
 int main(int argc, char **argv) {
   HandleOptions(argc, argv);
-  Tensor3 P = UniformRandomTPT(problem_dimension);
-  std::vector< std::vector<int> > seqs;
-  Simulate(P, seqs, number_of_simulated_sequences, size_of_simulated_sequence);
-  WriteTensor(P, tensor_output_file);
-  WriteSequences(seqs, sequence_output_file);
+  if (simulate_R1) {
+    SimulateR1();
+  } else if (simulate_R2) {
+    SimulateR2();
+  } else if (simulate_random) {
+    Tensor3 P = UniformRandomTPT(problem_dimension);
+    std::vector< std::vector<int> > seqs;
+    Simulate(P, seqs, number_of_simulated_sequences, size_of_simulated_sequence);
+    WriteTensor(P, tensor_output_file);
+    WriteSequences(seqs, sequence_output_file);
+  }
 }
