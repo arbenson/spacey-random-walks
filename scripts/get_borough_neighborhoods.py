@@ -3,7 +3,8 @@ from shapely.geometry import shape, Point
 import sys
 
 # Get all of the neighborhoods for a certain borough.
-
+# USAGE:
+#    python get_borough_neighborhoods.py Manhattan
 
 if __name__ == '__main__':
     keep_borough = sys.argv[1]
@@ -24,4 +25,3 @@ if __name__ == '__main__':
 
     with open('neighborhoods_%s.geojson' % keep_borough, 'w') as f:
         json.dump(nbrhoods_js, f)
-
