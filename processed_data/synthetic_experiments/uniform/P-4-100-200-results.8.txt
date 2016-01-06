@@ -1,0 +1,7 @@
+Spacey (true):      0.713882
+Spacey (estimated): 0.714233
+Spacey (empirical): 0.714662
+Second-order:       0.714916
+First-order:        0.714663
+|| PSRW - P ||_1 / N^2: 0.297622
+|| PSO - P ||_1 / N^2 : 0.593295
