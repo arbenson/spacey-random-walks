@@ -7,11 +7,13 @@ from shapely.geometry import shape, Point
 import sys
 from time import mktime, strptime
 
-'''
-Read the trip data and convert latlongs to a sequence of neighborhoods
+# Read the trip data and convert latlongs to a sequence of neighborhoods Uses
+# the idea here to determine the neighborhood of a latlong:
+# http://stackoverflow.com/questions/20776205/point-in-polygon-with-geojson-in-python
+#
+# USAGE:
+#    python form_nbrhood
 
-http://stackoverflow.com/questions/20776205/point-in-polygon-with-geojson-in-python
-'''
 
 def GetNeighborhoods(geo_file):
     ''' Return list of (shape polygon, neighborhood) tuples '''
@@ -61,7 +63,7 @@ def ProcessSeq(seq):
 
 def GetMedallions():
     medallions = {}
-    with open('data/medallions-1500.txt') as f:
+    with open('../processed_data/medallions-1k.txt') as f:
         for line in f:
             medallions[line.strip()] = 1
     return medallions
