@@ -1,3 +1,7 @@
+#!/bin/bash
+
+# Learn the spacey random walk model for the taxi data.
+
 dir=processed_data/taxi
 
 ./learn_synthetic \
