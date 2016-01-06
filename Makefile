@@ -15,15 +15,11 @@ default : all
 sim: simulate_srw.cpp $(OBJECTS)
 	$(CXX) $(CFLAGS) $< $(LDFLAGS) $(SNAP_OBJ) $(OBJECTS) $(LDLIBS) -o $@
 
-learn_real: learn_real.cpp $(OBJECTS)
-	$(CXX) $(CFLAGS) $< $(LDFLAGS) $(SNAP_OBJ) $(OBJECTS) $(LDLIBS) -o $@
-
-learn_synthetic: learn_synthetic.cpp $(OBJECTS)
+learn: learn.cpp $(OBJECTS)
 	$(CXX) $(CFLAGS) $< $(LDFLAGS) $(SNAP_OBJ) $(OBJECTS) $(LDLIBS) -o $@
 
 SCRIPTS = sim \
-          learn_real \
-          learn_synthetic
+          learn
 
 all: $(SCRIPTS)
 
