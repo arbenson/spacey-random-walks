@@ -1,5 +1,5 @@
-#ifndef _COMMON_SRS_HPP_
-#define _COMMON_SRS_HPP_
+#ifndef _COMMON_SRW_HPP_
+#define _COMMON_SRW_HPP_
 
 #include <cmath>
 #include <vector>
@@ -95,4 +95,4 @@ void ReadSequences(std::string filename,
 //    i j k P(i, j, k)
 void WriteTensor(const Tensor3& P, const std::string& outfile);
 
-#endif  // _COMMON_SRS_HPP_
+#endif  // _COMMON_SRW_HPP_
