@@ -8,6 +8,11 @@
 #include "common_srw.hpp"
 #include "tensor3.hpp"
 
+static const int max_iter = 200;
+static const double starting_step_size = 3.125e-08;
+static const double step_size_reduction = 0.5;
+static const double minimum_step_size = 1e-16;
+
 Tensor3 EmpiricalSecondOrder(const std::vector< std::vector<int> >& seqs) {
   int dim = MaximumIndex(seqs) + 1;
   Tensor3 X(dim);
@@ -40,7 +45,12 @@ Matrix2 EmpiricalFirstOrder(const std::vector< std::vector<int> >& seqs) {
   // Normalize to stochastic
   for (int j = 0; j < dim; ++j) {
     std::vector<double> col = X.GetColumn(j);
-    std::vector<double> ncol = Normalized(col);
+
+    // If the column sum is 0, guess randomly
+    std::vector<double> ncol(dim, 1.0 / dim);
+    if (Sum(col) > 0) {
+      ncol = Normalized(col);
+    }
     X.SetColumn(j, ncol);
   }
   return X;
@@ -116,23 +126,27 @@ Tensor3 EstimateSRW(const std::vector< std::vector<int> >& seqs) {
   Tensor3 X = EmpiricalSecondOrder(seqs);
   double curr_ll = LogLikelihood(X, seqs);
 
-  int niter = 40000;
-  double step_size = 1;
-  for (int iter = 0; iter < niter; ++iter) {
+  double step_size = starting_step_size;
+  for (int iter = 0; iter < max_iter; ++iter) {
     Tensor3 grad = Gradient(seqs, X);
     Tensor3 Y = SRWGradientUpdate(X, step_size, grad);
     double next_ll = LogLikelihood(Y, seqs);
     if (next_ll > curr_ll) {
       X = Y;
       curr_ll = next_ll;
+#if 0
       if (iter % 1000 == 0) {
 	std::cerr << curr_ll << " " << iter << " " << step_size << std::endl;
       }
+#else
+      std::cerr << curr_ll << " " << iter << " " << step_size << std::endl;
+#endif
     } else {
-      step_size *= 0.5;
+      // decrease step size
+      step_size *= step_size_reduction;
     }
     // Stop if the step size becomes too small.
-    if (step_size < 1e-16) {
+    if (step_size < minimum_step_size) {
       break;
     }
   }
@@ -244,29 +258,37 @@ int main(int argc, char **argv) {
   std::vector< std::vector<int> > train_seqs, test_seqs;
   ReadSequences(argv[1], train_seqs);
   ReadSequences(argv[2], test_seqs);
+#if 0
   Tensor3 P = ReadTensor(argv[3]);
+#endif
 
   Tensor3 PSO  = EmpiricalSecondOrder(train_seqs);
   Matrix2 PFO  = EmpiricalFirstOrder(train_seqs);
   Tensor3 PSRW = EstimateSRW(train_seqs);
 
+#if 0
   double err1 = SpaceyRMSE(test_seqs, P);
+#endif
   double err2 = SpaceyRMSE(test_seqs, PSRW);
   double err3 = SpaceyRMSE(test_seqs, PSO);
   double err4 = SecondOrderRMSE(test_seqs, PSO);
   double err5 = FirstOrderRMSE(test_seqs, PFO);
 
-  std::cout << "Spacey (true):      " << err1 << std::endl
-	    << "Spacey (estimated): " << err2 << std::endl
-	    << "Spacey (empirical): " << err3 << std::endl
-	    << "Second-order:       " << err4 << std::endl
-	    << "First-order:        " << err5 << std::endl;
+#if 0
+  std::cout << "Spacey (true):      " << err1 << std::endl;
+#endif
+  std::cout << "Spacey (estimated): " << err2 << std::endl;
+  std::cout << "Spacey (empirical): " << err3 << std::endl;
+  std::cout << "Second-order:       " << err4 << std::endl;
+  std::cout << "First-order:        " << err5 << std::endl;
 
+#if 0
   int N = P.dim();
   double diff1 = L1Diff(PSRW, P) / (N * N);
   double diff2 = L1Diff(PSO,  P) / (N * N);
-  std::cout << "|| PSRW - P ||_1 / N^2: " << diff1 << std::endl
-	    << "|| PSO - P ||_1 / N^2 : " << diff2 << std::endl;
+  std::cout << "|| PSRW - P ||_1 / N^2: " << diff1 << std::endl;
+  std::cout << "|| PSO - P ||_1 / N^2 : " << diff2 << std::endl;
+#endif
 
   WriteTensor(PSRW, argv[4]);  
 }

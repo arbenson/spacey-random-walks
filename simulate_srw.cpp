@@ -16,7 +16,6 @@ static int size_of_simulated_sequence = 1000;
 static std::string sequence_output_file = "seqs.out";
 static std::string tensor_output_file = "P.out";
 
-
 // Form random transition probability tensor.  Each column is selected uniformly
 // at random from the simplex.
 Tensor3 UniformRandomTPT(int dimension) {

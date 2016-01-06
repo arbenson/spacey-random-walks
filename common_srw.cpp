@@ -9,7 +9,7 @@
 
 #include "tensor3.hpp"
 
-bool InTopK(std::vector<double>& vec, int index, int K) {
+bool InTopK(const std::vector<double>& vec, int index, int K) {
   std::vector< std::pair<double, int> > ind_vec(vec.size());
   for (int i = 0; i < vec.size(); ++i) {
     ind_vec[i] = std::pair<double, int>(-vec[i], i);

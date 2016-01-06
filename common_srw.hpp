@@ -27,13 +27,15 @@ T L1Norm(const std::vector<T>& vec) {
   return sum;
 }  
 
-// Return the L1-normalized vector.
+// Return the L1-normalized vector.  Leaves the 0 vector as is.
 template <typename T>
 std::vector<double> Normalized(const std::vector<T>& vec) {
   std::vector<double> nvec(vec.size());
   double sum = L1Norm(vec);
-  for (int i = 0; i < nvec.size(); ++i) {
-    nvec[i] = static_cast<double>(vec[i]) / sum;
+  if (sum > 0.0) {
+    for (int i = 0; i < nvec.size(); ++i) {
+      nvec[i] = static_cast<double>(vec[i]) / sum;
+    }
   }
   return nvec;
 }
@@ -41,7 +43,7 @@ std::vector<double> Normalized(const std::vector<T>& vec) {
 // Given a vector of probabilities (vec) and an index in {0, 1, ...,
 // vec.size()-1}, determine if the vector value at the index is one of the top K
 // largest values.
-bool InTopK(std::vector<double>& vec, int index, int K);
+bool InTopK(const std::vector<double>& vec, int index, int K);
 
 // Maximum index used for all states (starts at 0).
 int MaximumIndex(const std::vector< std::vector<int> >& seqs);
