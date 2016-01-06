@@ -12,7 +12,12 @@ from time import mktime, strptime
 # http://stackoverflow.com/questions/20776205/point-in-polygon-with-geojson-in-python
 #
 # USAGE:
-#    python form_nbrhood
+#    python form_taxi_trajectories.py \
+#      ../processed_data/taxi/neighborhoods_Manhattan.geojson \
+#      ../raw_data/trip_data_1.csv \
+#      ../raw_data/trip_data_2.csv \
+#      ../raw_data/trip_data_3.csv
+
 
 
 def GetNeighborhoods(geo_file):
