@@ -1,4 +1,4 @@
-Spacey Random Walker
+Spacey Random Walks
 --------
 Austin R. Benson, David F. Gleich, and Lek-Heng Lim
 
