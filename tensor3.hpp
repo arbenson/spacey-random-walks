@@ -2,6 +2,8 @@
 #define _TENSOR3_HPP_
 
 #include <cassert>
+#include <utility>
+#include <vector>
 
 // Simple wrapper around an N x N x N tensor
 template <typename T>
@@ -107,7 +109,7 @@ private:
 };
 
 
-// Simple wrapper around an N x N tensor
+// Simple wrapper around an N x N matrix.
 template <typename T>
 class SquareMatrix {
 public:

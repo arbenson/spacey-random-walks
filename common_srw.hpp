@@ -71,25 +71,30 @@ double L1Diff(const std::vector<double>& v1, const std::vector<double>& v2);
 // N x N x N transition probability tensor P.
 std::vector<double> Apply(const Tensor3& P, const std::vector<double>& x);
 
-// Compute y = P x^2 (also y = R (x \kron x))
+// Compute y = P x^2 (or, equivalently, y = R (x \kron x)).
 std::vector<double> TensorApply(const Tensor3& P, const std::vector<double>& x);
 
 // Compute stationary distribution of the second-order Markov chain represented
 // by P.
 std::vector<double> Stationary(const Tensor3& P);
 
-// Compute the marginals of the stationary 
+// Compute the marginals of the second-order stationary distribution.
 std::vector<double> StationaryMarginals(const Tensor3& P);
 
 // Simple shifted power method to compute the spacey stationary distribution.
+// The shifted power method uses the following iteration:
+// 
+//          x_{k + 1} = (1 - gamma) P x^2 + gamma * x_{k}
+//
+// The iteration stops after max_iter iterations or if the the L1 difference
+// between successive iterations is less than tol.
 std::vector<double> SpaceyStationary(const Tensor3& P,
 				     int max_iter /* =1000 */,
 				     double gamma /* =0.01 */,
 				     double tol   /* =1e-12 */);
 
 // Read sequences from filename and store the resuts in seqs.
-void ReadSequences(std::string filename,
-                   std::vector< std::vector<int> >& seqs);
+void ReadSequences(std::string filename, std::vector< std::vector<int> >& seqs);
 
 // Write the tensor to file with the format
 //    i j k P(i, j, k)
