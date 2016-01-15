@@ -8,7 +8,7 @@
 #include <getopt.h>
 
 #include "common_srw.hpp"
-#include "tensor3.hpp"
+#include "hypermatrix.hpp"
 
 static int max_iter = 1000;
 static double starting_step_size = 1;
@@ -17,12 +17,12 @@ static double minimum_step_size = 1e-16;
 static int update_frequency = 1000;
 static std::string train_file = "";
 static std::string test_file = "";
-static std::string tensor_input_file = "";
-static std::string tensor_output_file = "P.txt";
+static std::string hypermatrix_input_file = "";
+static std::string hypermatrix_output_file = "P.txt";
 
-Tensor3 EmpiricalSecondOrder(const std::vector< std::vector<int> >& seqs) {
+DblCubeHypermatrix EmpiricalSecondOrder(const std::vector< std::vector<int> >& seqs) {
   int dim = MaximumIndex(seqs) + 1;
-  Tensor3 X(dim);
+  DblCubeHypermatrix X(dim);
   X.SetGlobalValue(0);
   for (auto& seq : seqs) {
     for (int l = 2; l < seq.size(); ++l) {
@@ -36,10 +36,10 @@ Tensor3 EmpiricalSecondOrder(const std::vector< std::vector<int> >& seqs) {
   return X;
 }
 
-Matrix2 EmpiricalFirstOrder(const std::vector< std::vector<int> >& seqs) {
+DblSquareMatrix EmpiricalFirstOrder(const std::vector< std::vector<int> >& seqs) {
   // Fill in empirical transitions
   int dim = MaximumIndex(seqs) + 1;
-  Matrix2 X(dim);
+  DblSquareMatrix X(dim);
   X.SetGlobalValue(0);
   for (auto& seq : seqs) {
     for (int l = 1; l < seq.size(); ++l) {
@@ -63,9 +63,9 @@ Matrix2 EmpiricalFirstOrder(const std::vector< std::vector<int> >& seqs) {
   return X;
 }
 
-Tensor3 Gradient(const std::vector< std::vector<int> >& seqs,
-                 const Tensor3& P) {
-  Tensor3 G(P.dim());
+DblCubeHypermatrix Gradient(const std::vector< std::vector<int> >& seqs,
+			    const DblCubeHypermatrix& P) {
+  DblCubeHypermatrix G(P.dim());
   G.SetGlobalValue(0.0);
   for (auto& seq : seqs) {
     std::vector<int> history(P.dim(), 1);
@@ -90,7 +90,8 @@ Tensor3 Gradient(const std::vector< std::vector<int> >& seqs,
   return G;
 }
 
-double LogLikelihood(const Tensor3& P, const std::vector< std::vector<int> >& seqs) {
+double LogLikelihood(const DblCubeHypermatrix& P,
+                     const std::vector< std::vector<int> >& seqs) {
   double ll = 0.0;
   for (auto& seq : seqs) {
     std::vector<int> history(P.dim(), 1);
@@ -114,10 +115,10 @@ double LogLikelihood(const Tensor3& P, const std::vector< std::vector<int> >& se
   return ll;
 }
 
-Tensor3 SRWGradientUpdate(const Tensor3& X, double step_size,
-			  const Tensor3& gradient) {
+DblCubeHypermatrix SRWGradientUpdate(const DblCubeHypermatrix& X, double step_size,
+				     const DblCubeHypermatrix& gradient) {
   int dim = X.dim();
-  Tensor3 Y(dim);
+  DblCubeHypermatrix Y(dim);
   for (int i = 0; i < dim; ++i) {
     for (int j = 0; j < dim; ++j) {
       for (int k = 0; k < dim; ++k) {
@@ -129,20 +130,20 @@ Tensor3 SRWGradientUpdate(const Tensor3& X, double step_size,
   return Y;
 }
 
-Tensor3 EstimateSRW(const std::vector< std::vector<int> >& seqs) {
-  Tensor3 X = EmpiricalSecondOrder(seqs);
+DblCubeHypermatrix EstimateSRW(const std::vector< std::vector<int> >& seqs) {
+  DblCubeHypermatrix X = EmpiricalSecondOrder(seqs);
   double curr_ll = LogLikelihood(X, seqs);
 
   double step_size = starting_step_size;
   for (int iter = 0; iter < max_iter; ++iter) {
-    Tensor3 grad = Gradient(seqs, X);
-    Tensor3 Y = SRWGradientUpdate(X, step_size, grad);
+    DblCubeHypermatrix grad = Gradient(seqs, X);
+    DblCubeHypermatrix Y = SRWGradientUpdate(X, step_size, grad);
     double next_ll = LogLikelihood(Y, seqs);
     if (next_ll > curr_ll) {
       X = Y;
       curr_ll = next_ll;
       if (iter % update_frequency == 0) {
-	std::cerr << curr_ll << " " << iter << " " << step_size << std::endl;
+        std::cerr << curr_ll << " " << iter << " " << step_size << std::endl;
       }
     } else {
       // decrease step size
@@ -156,7 +157,7 @@ Tensor3 EstimateSRW(const std::vector< std::vector<int> >& seqs) {
   return X;
 }
 
-Tensor3 ReadTensor(std::string filename) {
+DblCubeHypermatrix ReadHypermatrix(std::string filename) {
   std::vector<int> i_ind, j_ind, k_ind;
   std::vector<double> vals;
 
@@ -188,7 +189,7 @@ Tensor3 ReadTensor(std::string filename) {
   }
 
   // Put the values in P (treat as sparse indices).
-  Tensor3 P(max_ind + 1);
+  DblCubeHypermatrix P(max_ind + 1);
   P.SetGlobalValue(0.0);
   for (int l = 0; l < i_ind.size(); ++l) {
     P(i_ind[l], j_ind[l], k_ind[l]) = vals[l];
@@ -198,7 +199,7 @@ Tensor3 ReadTensor(std::string filename) {
 }
 
 double SpaceyRMSE(const std::vector< std::vector<int> >& seqs,
-                  const Tensor3& P) {
+                  const DblCubeHypermatrix& P) {
   double err = 0.0;
   int num = 0;
   for (auto& seq : seqs) {
@@ -224,7 +225,7 @@ double SpaceyRMSE(const std::vector< std::vector<int> >& seqs,
 }
 
 double SecondOrderRMSE(const std::vector< std::vector<int> >& seqs,
-		       const Tensor3& P) {
+                       const DblCubeHypermatrix& P) {
   double err = 0.0;
   int num = 0;
   for (auto& seq : seqs) {
@@ -242,7 +243,7 @@ double SecondOrderRMSE(const std::vector< std::vector<int> >& seqs,
 }
 
 double FirstOrderRMSE(const std::vector< std::vector<int> >& seqs,
-		      const Matrix2& P) {
+                      const DblSquareMatrix& P) {
   double err = 0.0;
   int num = 0;
   for (auto& seq : seqs) {
@@ -266,8 +267,8 @@ void HandleOptions(int argc, char **argv) {
       {"minimum_step_size",   required_argument, 0, 'm'},
       {"train_file",          required_argument, 0, 't'},
       {"test_file",           required_argument, 0, 'e'},
-      {"tensor_input_file",   required_argument, 0, 'p'},
-      {"tensor_output_file",  required_argument, 0, 'o'},
+      {"hypermatrix_input_file",   required_argument, 0, 'p'},
+      {"hypermatrix_output_file",  required_argument, 0, 'o'},
       {"update_frequency",    required_argument, 0, 'u'},
       {0, 0, 0, 0}
     };
@@ -276,7 +277,7 @@ void HandleOptions(int argc, char **argv) {
   while (1) {
     int option_index = 0;
     c = getopt_long (argc, argv, "n:s:r:m:t:p:e:o:u:",
-		     long_options, &option_index);
+                     long_options, &option_index);
     // Detect the end of the options.
     if (c == -1) {
       break;
@@ -286,7 +287,7 @@ void HandleOptions(int argc, char **argv) {
     case 0:
       // If this option set a flag, do nothing else now.
       if (long_options[option_index].flag != 0) {
-	break;
+        break;
       }
     case 'n':
       max_iter = atoi(optarg);
@@ -306,10 +307,10 @@ void HandleOptions(int argc, char **argv) {
       test_file = std::string(optarg);
       break;
     case 'p':
-      tensor_input_file = std::string(optarg);
+      hypermatrix_input_file = std::string(optarg);
       break;
     case 'o':
-      tensor_output_file = std::string(optarg);
+      hypermatrix_output_file = std::string(optarg);
       break;
     case 'u':
       update_frequency = atoi(optarg);
@@ -333,17 +334,17 @@ int main(int argc, char **argv) {
   std::vector< std::vector<int> > train_seqs, test_seqs;
   ReadSequences(train_file, train_seqs);
   ReadSequences(test_file, test_seqs);
-  Tensor3 P;
-  if (tensor_input_file.size() > 0) {
-    P = ReadTensor(tensor_input_file);
+  DblCubeHypermatrix P;
+  if (hypermatrix_input_file.size() > 0) {
+    P = ReadHypermatrix(hypermatrix_input_file);
   }
 
-  Tensor3 PSO  = EmpiricalSecondOrder(train_seqs);
-  Matrix2 PFO  = EmpiricalFirstOrder(train_seqs);
-  Tensor3 PSRW = EstimateSRW(train_seqs);
+  DblCubeHypermatrix PSO  = EmpiricalSecondOrder(train_seqs);
+  DblSquareMatrix PFO  = EmpiricalFirstOrder(train_seqs);
+  DblCubeHypermatrix PSRW = EstimateSRW(train_seqs);
 
   double err1 = 0;
-  if (tensor_input_file.size() > 0) {
+  if (hypermatrix_input_file.size() > 0) {
     err1 = SpaceyRMSE(test_seqs, P);
   }
   double err2 = SpaceyRMSE(test_seqs, PSRW);
@@ -352,7 +353,7 @@ int main(int argc, char **argv) {
   double err5 = FirstOrderRMSE(test_seqs, PFO);
 
   // RMSEs on the test data
-  if (tensor_input_file.size() > 0) {
+  if (hypermatrix_input_file.size() > 0) {
     std::cout << "Spacey (true):      " << err1 << std::endl;
   }
   std::cout << "Spacey (estimated): " << err2 << std::endl;
@@ -361,7 +362,7 @@ int main(int argc, char **argv) {
   std::cout << "First-order:        " << err5 << std::endl;
 
   // Error in parameter recovery
-  if (tensor_input_file.size() > 0) {
+  if (hypermatrix_input_file.size() > 0) {
     int N = P.dim();
     double diff1 = L1Diff(PSRW, P) / (N * N);
     double diff2 = L1Diff(PSO,  P) / (N * N);
@@ -369,5 +370,5 @@ int main(int argc, char **argv) {
     std::cout << "|| PSO - P ||_1 / N^2 : " << diff2 << std::endl;
   }
 
-  WriteTensor(PSRW, tensor_output_file);  
+  WriteHypermatrix(PSRW, hypermatrix_output_file);  
 }

@@ -7,7 +7,7 @@
 #include <sstream>
 #include <vector>
 
-#include "tensor3.hpp"
+#include "hypermatrix.hpp"
 
 bool InTopK(const std::vector<double>& vec, int index, int K) {
   std::vector< std::pair<double, int> > ind_vec(vec.size());
@@ -61,7 +61,7 @@ std::vector<double> SimplexProjection(const std::vector<double>& vec) {
   return ret;
 }
 
-void ProjectColumnsOntoSimplex(Tensor3& Y) {
+void ProjectColumnsOntoSimplex(DblCubeHypermatrix& Y) {
   int dim = Y.dim();
   for (int j = 0; j < dim; ++j) {
     for (int k = 0; k < dim; ++k) {
@@ -71,7 +71,7 @@ void ProjectColumnsOntoSimplex(Tensor3& Y) {
   }
 }
 
-void NormalizeStochastic(Tensor3& P) {
+void NormalizeStochastic(DblCubeHypermatrix& P) {
   int dim = P.dim();
   for (int k = 0; k < dim; ++k) {
     for (int j = 0; j < dim; ++j) {
@@ -107,7 +107,7 @@ int Choice(const std::vector<double>& probs) {
   return probs.size() - 1;
 }
 
-double L1Diff(const Tensor3& P1, const Tensor3& P2) {
+double L1Diff(const DblCubeHypermatrix& P1, const DblCubeHypermatrix& P2) {
   double diff = 0.0;
   int dimension = P1.dim();
   assert(dimension == P2.dim());
@@ -130,7 +130,8 @@ double L1Diff(const std::vector<double>& v1, const std::vector<double>& v2) {
   return diff;
 }
 
-std::vector<double> TensorApply(const Tensor3& P, const std::vector<double>& x) {
+std::vector<double> HypermatrixApply(const DblCubeHypermatrix& P,
+				     const std::vector<double>& x) {
   std::vector<double> y(x.size(), 0.0);
   int dim = P.dim();
   for (int i = 0; i < dim; ++i) {
@@ -144,7 +145,8 @@ std::vector<double> TensorApply(const Tensor3& P, const std::vector<double>& x) 
   return y;
 }
 
-std::vector<double> Apply(const Tensor3& P, const std::vector<double>& x) {
+std::vector<double> Apply(const DblCubeHypermatrix& P,
+			  const std::vector<double>& x) {
   std::vector<double> y(x.size(), 0.0);
   int dim = P.dim();
   for (int i = 0; i < dim; ++i) {
@@ -159,7 +161,7 @@ std::vector<double> Apply(const Tensor3& P, const std::vector<double>& x) {
 }
 
 
-std::vector<double> Stationary(const Tensor3& P) {
+std::vector<double> Stationary(const DblCubeHypermatrix& P) {
   int dim = P.dim();
   std::vector<double> x(dim * dim, 1.0 / (dim * dim));
   int max_iter = 1000;
@@ -176,7 +178,7 @@ std::vector<double> Stationary(const Tensor3& P) {
   return x;
 }
 
-std::vector<double> StationaryMarginals(const Tensor3& P) {
+std::vector<double> StationaryMarginals(const DblCubeHypermatrix& P) {
   std::vector<double> st = Stationary(P);
   int dim = P.dim();
   std::vector<double> marginals(dim, 0.0);
@@ -187,12 +189,13 @@ std::vector<double> StationaryMarginals(const Tensor3& P) {
   return marginals;
 }
 
-std::vector<double> SpaceyStationary(const Tensor3& P, int max_iter=1000,
-				     double gamma=0.01, double tol=1e-12) {
+std::vector<double> SpaceyStationary(const DblCubeHypermatrix& P,
+				     int max_iter=1000, double gamma=0.01,
+				     double tol=1e-12) {
   int dim = P.dim();
   std::vector<double> x(dim, 1.0 / dim);
   for (int iter = 0; iter < max_iter; ++iter) {
-    std::vector<double> x_next = TensorApply(P, x);
+    std::vector<double> x_next = HypermatrixApply(P, x);
     // Check the difference
     double diff = L1Diff(x_next, x);
     for (int j = 0; j < x.size(); ++j) {
@@ -222,7 +225,7 @@ void ReadSequences(std::string filename,
   }
 }
 
-void WriteTensor(const Tensor3& P, const std::string& outfile) {
+void WriteHypermatrix(const DblCubeHypermatrix& P, const std::string& outfile) {
   std::ofstream out;
   out.open(outfile);
   int dim = P.dim();

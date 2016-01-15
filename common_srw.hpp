@@ -4,7 +4,7 @@
 #include <cmath>
 #include <vector>
 
-#include "tensor3.hpp"
+#include "hypermatrix.hpp"
 
 
 // Return sum of a vector
@@ -51,35 +51,35 @@ int MaximumIndex(const std::vector< std::vector<int> >& seqs);
 // Minimum l2 projection onto the simplex.
 std::vector<double> SimplexProjection(const std::vector<double>& vec);
 
-// Normalize columns of a transition probability tensor to be stochastic.
-void NormalizeStochastic(Tensor3& P);
+// Normalize columns of a transition probability hypermatrix to be stochastic.
+void NormalizeStochastic(DblCubeHypermatrix& P);
 
-// Use the minimum l2 projection to project each column of the tensor onto the
+// Use the minimum l2 projection to project each column of the hypermatrix onto the
 // simplex.
-void ProjectColumnsOntoSimplex(Tensor3& Y);
+void ProjectColumnsOntoSimplex(DblCubeHypermatrix& Y);
 
 // Sample from a discrete probability distribution.
 int Choice(const std::vector<double>& probs);
 
 // || vec(P1) - vec(P2) ||_1
-double L1Diff(const Tensor3& P1, const Tensor3& P2);
+double L1Diff(const DblCubeHypermatrix& P1, const DblCubeHypermatrix& P2);
 
 // || v1 - v2 ||_1
 double L1Diff(const std::vector<double>& v1, const std::vector<double>& v2);
 
 // Apply length-N^2 vector x to N^2 x N^2 transition matrix represented by the
-// N x N x N transition probability tensor P.
-std::vector<double> Apply(const Tensor3& P, const std::vector<double>& x);
+// N x N x N transition probability hypermatrix P.
+std::vector<double> Apply(const DblCubeHypermatrix& P, const std::vector<double>& x);
 
 // Compute y = P x^2 (or, equivalently, y = R (x \kron x)).
-std::vector<double> TensorApply(const Tensor3& P, const std::vector<double>& x);
+std::vector<double> HypermatrixApply(const DblCubeHypermatrix& P, const std::vector<double>& x);
 
 // Compute stationary distribution of the second-order Markov chain represented
 // by P.
-std::vector<double> Stationary(const Tensor3& P);
+std::vector<double> Stationary(const DblCubeHypermatrix& P);
 
 // Compute the marginals of the second-order stationary distribution.
-std::vector<double> StationaryMarginals(const Tensor3& P);
+std::vector<double> StationaryMarginals(const DblCubeHypermatrix& P);
 
 // Simple shifted power method to compute the spacey stationary distribution.
 // The shifted power method uses the following iteration:
@@ -88,7 +88,7 @@ std::vector<double> StationaryMarginals(const Tensor3& P);
 //
 // The iteration stops after max_iter iterations or if the the L1 difference
 // between successive iterations is less than tol.
-std::vector<double> SpaceyStationary(const Tensor3& P,
+std::vector<double> SpaceyStationary(const DblCubeHypermatrix& P,
 				     int max_iter /* =1000 */,
 				     double gamma /* =0.01 */,
 				     double tol   /* =1e-12 */);
@@ -96,8 +96,8 @@ std::vector<double> SpaceyStationary(const Tensor3& P,
 // Read sequences from filename and store the resuts in seqs.
 void ReadSequences(std::string filename, std::vector< std::vector<int> >& seqs);
 
-// Write the tensor to file with the format
+// Write the hypermatrix to file with the format
 //    i j k P(i, j, k)
-void WriteTensor(const Tensor3& P, const std::string& outfile);
+void WriteHypermatrix(const DblCubeHypermatrix& P, const std::string& outfile);
 
 #endif  // _COMMON_SRW_HPP_

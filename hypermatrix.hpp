@@ -7,14 +7,14 @@
 
 // Simple wrapper around an N x N x N tensor
 template <typename T>
-class CubeTensor {
+class CubeHypermatrix {
 public:
-  CubeTensor() { data_ = NULL; }
-  CubeTensor(int N) : N_(N) { data_ = new T[N * N * N]; }
-  ~CubeTensor() { if (data_ != NULL) free(data_); }
+  CubeHypermatrix() { data_ = NULL; }
+  CubeHypermatrix(int N) : N_(N) { data_ = new T[N * N * N]; }
+  ~CubeHypermatrix() { if (data_ != NULL) free(data_); }
 
   // Copy constructor
-  CubeTensor(CubeTensor& that) : CubeTensor(that.dim()) {
+  CubeHypermatrix(CubeHypermatrix& that) : CubeHypermatrix(that.dim()) {
     int N = that.dim();
     for (int i = 0; i < N; ++i) {
       for (int j = 0; j < N; ++j) {
@@ -26,17 +26,17 @@ public:
   }
 
   // Move constructor
-  CubeTensor(CubeTensor&& that) : CubeTensor() {
+  CubeHypermatrix(CubeHypermatrix&& that) : CubeHypermatrix() {
     swap(*this, that);
   }
 
   // copy assignment
-  CubeTensor& operator=(CubeTensor that) {
+  CubeHypermatrix& operator=(CubeHypermatrix that) {
     swap(*this, that);
     return *this;
   }
 
-  friend void swap(CubeTensor& first, CubeTensor& second) {
+  friend void swap(CubeHypermatrix& first, CubeHypermatrix& second) {
     using std::swap;
     swap(first.N_, second.N_);
     swap(first.data_, second.data_);
@@ -187,7 +187,7 @@ private:
   int N_;
 };
 
-typedef SquareMatrix<double> Matrix2;
-typedef CubeTensor<double> Tensor3;
+typedef SquareMatrix<double> DblSquareMatrix;
+typedef CubeHypermatrix<double> DblCubeHypermatrix;
 
 #endif  // _TENSOR3_HPP_

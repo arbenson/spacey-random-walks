@@ -7,7 +7,7 @@
 #include <getopt.h>
 
 #include "common_srw.hpp"
-#include "tensor3.hpp"
+#include "hypermatrix.hpp"
 
 static int simulate_R1 = 0;
 static int simulate_R2 = 0;
@@ -18,13 +18,13 @@ static int size_of_simulated_sequence = 1000;
 static std::string sequence_output_file = "seqs.out";
 static std::string tensor_output_file = "P.out";
 
-// Form random transition probability tensor.  Each column is selected uniformly
-// at random from the simplex.
-Tensor3 UniformRandomTPT(int dimension) {
+// Form random transition hypermatrix.  Each column is selected uniformly at
+// random from the simplex.
+DblCubeHypermatrix UniformRandomTH(int dimension) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_real_distribution<> dis(0, 1);
-  Tensor3 P(dimension);
+  DblCubeHypermatrix P(dimension);
   for (int j = 0; j < dimension; ++j) {
     for (int k = 0; k < dimension; ++k) {
       std::vector<double> samples = {0.0, 1.0};
@@ -42,11 +42,11 @@ Tensor3 UniformRandomTPT(int dimension) {
 }
 
 // Form random transition probability tensor.
-Tensor3 LogNormalRandomTPT(int dimension) {
+DblCubeHypermatrix LogNormalRandomTH(int dimension) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::lognormal_distribution<double> dis(0.0,1.0);
-  Tensor3 P(dimension);
+  DblCubeHypermatrix P(dimension);
   for (int i = 0; i < dimension; ++i) {
     for (int j = 0; j < dimension; ++j) {
       for (int k = 0; k < dimension; ++k) {
@@ -58,9 +58,13 @@ Tensor3 LogNormalRandomTPT(int dimension) {
   return P;
 }
 
-// Transitions corresponding to R_{1} in multilinear pagerank paper.
-Tensor3 R1() {
-  Tensor3 X(4);
+// Transitions corresponding to R_{4,1} in multilinear pagerank paper.
+//  Reference:
+//     D. F. Gleich, L.-H. Lim, and Y. Yu. Multilinear pagerank. SIAM
+//     Journal on Matrix Analysis and Applications, 36 (4), pp.
+//     1507–1541, 2015. doi:10.1137/140985160.
+DblCubeHypermatrix R1() {
+  DblCubeHypermatrix X(4);
   X.SetGlobalValue(0.0);
   
   // First panel
@@ -94,8 +98,8 @@ Tensor3 R1() {
 }
 
 // Transitions corresponding to R_{4,9} in multilinear pagerank paper.
-Tensor3 R2() {
-  Tensor3 X(4);
+DblCubeHypermatrix R2() {
+  DblCubeHypermatrix X(4);
   X.SetGlobalValue(0.0);
   
   // First panel
@@ -127,7 +131,7 @@ Tensor3 R2() {
   return X;
 }
 
-void Simulate(const Tensor3& P, std::vector< std::vector<int> >& seqs,
+void Simulate(const DblCubeHypermatrix& P, std::vector< std::vector<int> >& seqs,
               int num_seqs, int num_samples) {
   int dim = P.dim();
   seqs.clear();
@@ -222,17 +226,17 @@ void WriteSequences(const std::vector< std::vector<int> >& seqs,
 
 void SimulateR1() {
   std::vector< std::vector<int> > seqs;
-  Tensor3 P = R1();
+  DblCubeHypermatrix P = R1();
   Simulate(P, seqs, number_of_simulated_sequences, size_of_simulated_sequence);
-  WriteTensor(P, tensor_output_file);
+  WriteHypermatrix(P, tensor_output_file);
   WriteSequences(seqs, sequence_output_file);
 }
 
 void SimulateR2() {
   std::vector< std::vector<int> > seqs;
-  Tensor3 P = R2();
+  DblCubeHypermatrix P = R2();
   Simulate(P, seqs, number_of_simulated_sequences, size_of_simulated_sequence);
-  WriteTensor(P, tensor_output_file);
+  WriteHypermatrix(P, tensor_output_file);
   WriteSequences(seqs, sequence_output_file);
 }
 
@@ -243,10 +247,10 @@ int main(int argc, char **argv) {
   } else if (simulate_R2) {
     SimulateR2();
   } else if (simulate_random) {
-    Tensor3 P = UniformRandomTPT(problem_dimension);
+    DblCubeHypermatrix P = UniformRandomTH(problem_dimension);
     std::vector< std::vector<int> > seqs;
     Simulate(P, seqs, number_of_simulated_sequences, size_of_simulated_sequence);
-    WriteTensor(P, tensor_output_file);
+    WriteHypermatrix(P, tensor_output_file);
     WriteSequences(seqs, sequence_output_file);
   }
 }
