@@ -1,0 +1,36 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set(style='ticks', palette='muted')
+
+# Draw the dynamics of the 2x2x2x2 example in the paper
+
+def Perron(R, x):
+    xvec = np.array([[x], [1 - x]])
+    R1 = np.dot(R, np.kron(np.kron(xvec, xvec), np.identity(len(xvec))))
+    p = R1[0][0]
+    q = R1[1][1]
+    return (1 - q) / (2 - p - q) - x
+
+R = np.array([[0.925, 0.925, 0.925, 0.075, 0.925, 0.075, 0.075, 0.075],
+              [0.075, 0.075, 0.075, 0.925, 0.075, 0.925, 0.925, 0.925]])
+xvals = list(np.arange(0, 1, .001))
+yvals = [Perron(R, x) for x in xvals]
+ind1 = xvals.index(0.097)
+ind2 = xvals.index(0.5)
+ind3 = xvals.index(0.897)
+
+fsz = 22
+ms = 20
+plt.plot(xvals, yvals, 'b', lw=2)
+plt.plot(xvals[ind1], yvals[ind1], 'g*', ms=ms+2)
+plt.plot(xvals[ind3], yvals[ind3], 'g*', ms=ms+2)
+plt.plot(xvals[ind2], yvals[ind2], 'rs', ms=ms)
+
+plt.xlabel('x', fontsize=fsz)
+plt.ylabel('f(x)', fontsize=fsz)
+plt.tick_params(labelsize=fsz)
+
+sns.despine()
+plt.savefig('FIG/srs_dynamics.pdf', bbox_inches='tight')
+plt.show()
