@@ -20,17 +20,17 @@ ind1 = xvals.index(0.097)
 ind2 = xvals.index(0.5)
 ind3 = xvals.index(0.897)
 
-fsz = 22
+fsz = 24
 ms = 20
-plt.plot(xvals, yvals, 'b', lw=2)
-plt.plot(xvals[ind1], yvals[ind1], 'g*', ms=ms+2)
-plt.plot(xvals[ind3], yvals[ind3], 'g*', ms=ms+2)
-plt.plot(xvals[ind2], yvals[ind2], 'rs', ms=ms)
+plt.plot(xvals, yvals, lw=4, color='#7570b3')
+plt.plot(xvals[ind1], yvals[ind1], 'o', ms=ms, color='#1b9e77')
+plt.plot(xvals[ind3], yvals[ind3], 'o', ms=ms, color='#1b9e77')
+plt.plot(xvals[ind2], yvals[ind2], 's', ms=ms, color='#d95f02')
 
-plt.xlabel('x', fontsize=fsz)
-plt.ylabel('f(x)', fontsize=fsz)
+plt.xlabel('x', fontsize=fsz+6)
+plt.ylabel('f(x)', fontsize=fsz+6)
 plt.tick_params(labelsize=fsz)
 
 sns.despine()
-plt.savefig('FIG/srs_dynamics.pdf', bbox_inches='tight')
+plt.savefig('srs_dynamics.pdf', bbox_inches='tight')
 plt.show()
