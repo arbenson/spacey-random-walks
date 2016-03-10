@@ -2,7 +2,12 @@ Spacey Random Walks
 --------
 Austin R. Benson, David F. Gleich, and Lek-Heng Lim
 
-This repository contains research code to accompany our paper.
+This repository contains research code to accompany our work:
+
+The Spacey Random Walk: a Stochastic Process for Higher-order Data.
+
+Available on [arXiv](http://arxiv.org/abs/1602.02102).
+
 
 
 Synthetic data
