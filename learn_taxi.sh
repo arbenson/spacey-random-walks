@@ -3,7 +3,6 @@
 # Learn the spacey random walk model for the taxi data.  Need to run
 # 'make learn' first.
 
-
 dir=processed_data/taxi
 
 ./learn \
