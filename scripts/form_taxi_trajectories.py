@@ -18,8 +18,6 @@ from time import mktime, strptime
 #      ../raw_data/trip_data_2.csv \
 #      ../raw_data/trip_data_3.csv
 
-
-
 def GetNeighborhoods(geo_file):
     ''' Return list of (shape polygon, neighborhood) tuples '''
     # load GeoJSON file
