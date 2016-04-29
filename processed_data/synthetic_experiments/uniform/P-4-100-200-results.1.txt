@@ -3,5 +3,6 @@ Spacey (estimated): 0.722522
 Spacey (empirical): 0.723043
 Second-order:       0.723237
 First-order:        0.723101
+Zeroth-order:       0.747866
 || PSRW - P ||_1 / N^2: 0.314429
 || PSO - P ||_1 / N^2 : 0.479655
