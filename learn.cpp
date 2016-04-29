@@ -307,8 +307,8 @@ double ZerothOrderRMSE(const std::vector< std::vector<int> >& seqs,
   int num = 0;
   for (auto& seq : seqs) {
     for (int l = 2; l < seq.size(); ++l) {
-      double val = p[seq[l]];
-      err += 1 - val * val;
+      double val = 1 - p[seq[l]];
+      err += val * val;
       ++num;
     }
   }
