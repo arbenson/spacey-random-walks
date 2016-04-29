@@ -20,6 +20,8 @@ static std::string test_file = "";
 static std::string hypermatrix_input_file = "";
 static std::string hypermatrix_output_file = "P.txt";
 
+// Get the empirical (MLE) second-order Markov chain transition probabilities.
+// returns X such that X(i, j, k) = Pr((k, j) --> (j, i))
 DblCubeHypermatrix EmpiricalSecondOrder(const std::vector< std::vector<int> >& seqs) {
   int dim = MaximumIndex(seqs) + 1;
   DblCubeHypermatrix X(dim);
@@ -36,6 +38,7 @@ DblCubeHypermatrix EmpiricalSecondOrder(const std::vector< std::vector<int> >& s
   return X;
 }
 
+// Get the empirical (MLE) first-order Markov chain transition probabilities.
 DblSquareMatrix EmpiricalFirstOrder(const std::vector< std::vector<int> >& seqs) {
   // Fill in empirical transitions
   int dim = MaximumIndex(seqs) + 1;
@@ -63,6 +66,29 @@ DblSquareMatrix EmpiricalFirstOrder(const std::vector< std::vector<int> >& seqs)
   return X;
 }
 
+// Get the empirical (MLE) zero-order Markov chain transition probabilities,
+// which are just the marginal probabilities of being at each state.
+std::vector<double> EmpiricalZerothOrder(const std::vector< std::vector<int> >& seqs) {
+  // Fill in empirical transitions
+  int dim = MaximumIndex(seqs) + 1;
+  std::vector<int> counts(dim, 0);
+  int total = 0;
+  for (auto& seq : seqs) {
+    for (int place : seq) {
+      ++counts[place];
+      ++total;
+    }
+  }
+
+  // Normalize to stochastic
+  std::vector<double> x(dim);
+  for (int j = 0; j < dim; ++j) {
+    x[j] = static_cast<double>(counts[j]) / total;
+  }
+  return x;
+}
+
+// Get the gradient of the likelihood for the spacey random walk model
 DblCubeHypermatrix Gradient(const std::vector< std::vector<int> >& seqs,
 			    const DblCubeHypermatrix& P) {
   DblCubeHypermatrix G(P.dim());
@@ -90,8 +116,10 @@ DblCubeHypermatrix Gradient(const std::vector< std::vector<int> >& seqs,
   return G;
 }
 
-double LogLikelihood(const DblCubeHypermatrix& P,
-                     const std::vector< std::vector<int> >& seqs) {
+// Compute the spacey random walk log likelihood for the spacey random
+// walk model with transition probabilities P.
+double LogLikelihood(const std::vector< std::vector<int> >& seqs,
+		     const DblCubeHypermatrix& P) {
   double ll = 0.0;
   for (auto& seq : seqs) {
     std::vector<int> history(P.dim(), 1);
@@ -115,8 +143,10 @@ double LogLikelihood(const DblCubeHypermatrix& P,
   return ll;
 }
 
-DblCubeHypermatrix SRWGradientUpdate(const DblCubeHypermatrix& X, double step_size,
-				     const DblCubeHypermatrix& gradient) {
+// Given the current transition probabilities X, the gradient, and the step size,
+// compute the next iterative of projected gradient descent.
+DblCubeHypermatrix SRWGradientUpdate(const DblCubeHypermatrix& X,
+				     const DblCubeHypermatrix& gradient, double step_size) {
   int dim = X.dim();
   DblCubeHypermatrix Y(dim);
   for (int i = 0; i < dim; ++i) {
@@ -130,15 +160,17 @@ DblCubeHypermatrix SRWGradientUpdate(const DblCubeHypermatrix& X, double step_si
   return Y;
 }
 
+// Estimate the spacey random walk transition probabilities using projected
+// gradient descent.
 DblCubeHypermatrix EstimateSRW(const std::vector< std::vector<int> >& seqs) {
   DblCubeHypermatrix X = EmpiricalSecondOrder(seqs);
-  double curr_ll = LogLikelihood(X, seqs);
+  double curr_ll = LogLikelihood(seqs, X);
 
   double step_size = starting_step_size;
   for (int iter = 0; iter < max_iter; ++iter) {
     DblCubeHypermatrix grad = Gradient(seqs, X);
-    DblCubeHypermatrix Y = SRWGradientUpdate(X, step_size, grad);
-    double next_ll = LogLikelihood(Y, seqs);
+    DblCubeHypermatrix Y = SRWGradientUpdate(X, grad, step_size);
+    double next_ll = LogLikelihood(seqs, Y);
     if (next_ll > curr_ll) {
       X = Y;
       curr_ll = next_ll;
@@ -157,6 +189,13 @@ DblCubeHypermatrix EstimateSRW(const std::vector< std::vector<int> >& seqs) {
   return X;
 }
 
+// Read a third-order sparse hypermatrix from a text file.  Each line of the
+// file looks like
+//
+//       i j k v
+// 
+// which says that the (i, j, k) entry has value v.  All triplets not in the
+// file are assumed to be 0.
 DblCubeHypermatrix ReadHypermatrix(std::string filename) {
   std::vector<int> i_ind, j_ind, k_ind;
   std::vector<double> vals;
@@ -198,6 +237,7 @@ DblCubeHypermatrix ReadHypermatrix(std::string filename) {
   return P;
 }
 
+// RMSE for the spacey random walk model
 double SpaceyRMSE(const std::vector< std::vector<int> >& seqs,
                   const DblCubeHypermatrix& P) {
   double err = 0.0;
@@ -224,6 +264,7 @@ double SpaceyRMSE(const std::vector< std::vector<int> >& seqs,
   return sqrt(err / num);
 }
 
+// RMSE for the second-order Markov chain model
 double SecondOrderRMSE(const std::vector< std::vector<int> >& seqs,
                        const DblCubeHypermatrix& P) {
   double err = 0.0;
@@ -242,6 +283,7 @@ double SecondOrderRMSE(const std::vector< std::vector<int> >& seqs,
   return sqrt(err / num);
 }
 
+// RMSE for the first-order Markov chain model
 double FirstOrderRMSE(const std::vector< std::vector<int> >& seqs,
                       const DblSquareMatrix& P) {
   double err = 0.0;
@@ -252,6 +294,21 @@ double FirstOrderRMSE(const std::vector< std::vector<int> >& seqs,
       int j = seq[l - 1];
       double val = 1 - P(i, j);
       err += val * val;
+      ++num;
+    }
+  }
+  return sqrt(err / num);
+}
+
+// RMSE for the zeroth-order Markov chain model (i.e., marginals)
+double ZerothOrderRMSE(const std::vector< std::vector<int> >& seqs,
+		       const std::vector<double>& p) {
+  double err = 0.0;
+  int num = 0;
+  for (auto& seq : seqs) {
+    for (int l = 2; l < seq.size(); ++l) {
+      double val = p[seq[l]];
+      err += 1 - val * val;
       ++num;
     }
   }
@@ -339,9 +396,11 @@ int main(int argc, char **argv) {
     P = ReadHypermatrix(hypermatrix_input_file);
   }
 
-  DblCubeHypermatrix PSO  = EmpiricalSecondOrder(train_seqs);
+  std::vector<double> marginal = EmpiricalZerothOrder(train_seqs);
   DblSquareMatrix PFO  = EmpiricalFirstOrder(train_seqs);
+  DblCubeHypermatrix PSO  = EmpiricalSecondOrder(train_seqs);
   DblCubeHypermatrix PSRW = EstimateSRW(train_seqs);
+
 
   double err1 = 0;
   if (hypermatrix_input_file.size() > 0) {
@@ -351,6 +410,7 @@ int main(int argc, char **argv) {
   double err3 = SpaceyRMSE(test_seqs, PSO);
   double err4 = SecondOrderRMSE(test_seqs, PSO);
   double err5 = FirstOrderRMSE(test_seqs, PFO);
+  double err6 = ZerothOrderRMSE(test_seqs, marginal);
 
   // RMSEs on the test data
   if (hypermatrix_input_file.size() > 0) {
@@ -360,6 +420,7 @@ int main(int argc, char **argv) {
   std::cout << "Spacey (empirical): " << err3 << std::endl;
   std::cout << "Second-order:       " << err4 << std::endl;
   std::cout << "First-order:        " << err5 << std::endl;
+  std::cout << "Zeroth-order:       " << err6 << std::endl;
 
   // Error in parameter recovery
   if (hypermatrix_input_file.size() > 0) {
